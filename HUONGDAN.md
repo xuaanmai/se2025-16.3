@@ -4,10 +4,36 @@
 **Công nghệ:** Laravel (Backend API) + Vue.js (Frontend SPA)  
 **Mục tiêu:** Xây dựng hệ thống quản lý dự án toàn diện với khả năng realtime, phân quyền, thống kê trực quan, và kiến trúc frontend/backend tách biệt.
 
+---
+
+## 📊 GANTT CHART 
+
+```
+THÁNG 1: FOUNDATION & CORE FEATURES
+═══════════════════════════════════════════════════════════════════
+Week 1  │████████│ Setup & Authentication
+Week 2  │████████████│ Projects Module (Backend + Frontend)
+Week 3  │████████████│ Tickets Module - Part 1
+Week 4  │████████████│ Tickets Module - Part 2 + Comments
+
+THÁNG 2: ADVANCED FEATURES
+═══════════════════════════════════════════════════════════════════
+Week 5  │████████████│ Sprint & Kanban Board
+Week 6  │████████████│ Drag-drop + Board Interactions
+Week 7  │████████│ Dashboard & Analytics
+Week 8  │████████│ Epic & Roadmap Features
+
+THÁNG 3: POLISH & DEPLOYMENT
+═══════════════════════════════════════════════════════════════════
+Week 9  │████████│ Notifications & Real-time Updates
+Week 10 │████████│ File Upload & Time Tracking
+Week 11 │████████████│ Testing & Bug Fixes
+Week 12 │████████████│ Deployment & Documentation
+```
 
 ---
 
-## 🎯 I. TỔNG QUAN KIẾN TRÚC HỆ THỐNG
+## 🎯 I. TỔNG QUAN KIẾN TRÚC
 
 ### 1.1 Kiến trúc tổng thể
 
@@ -22,45 +48,35 @@
                           ↓ HTTP/HTTPS
 ┌─────────────────────────────────────────────────────────┐
 │                    API GATEWAY                          │
-│         Laravel Sanctum Authentication                  │
-│         CORS, Rate Limiting, Validation                 │
+│    Laravel Sanctum + CORS + Rate Limiting               │
 └─────────────────────────────────────────────────────────┘
                           ↓
 ┌─────────────────────────────────────────────────────────┐
-│                  BACKEND LAYER (Laravel)                │
-│  ┌──────────┐  ┌──────────┐  ┌──────────┐             │
-│  │   API    │  │ Business │  │  Events  │             │
-│  │Controllers│  │  Logic   │  │  Queue   │             │
-│  └──────────┘  └──────────┘  └──────────┘             │
+│              BACKEND (Laravel 11)                       │
+│  Controllers → Services → Models → Database             │
 └─────────────────────────────────────────────────────────┘
                           ↓
 ┌─────────────────────────────────────────────────────────┐
 │                   DATA LAYER                            │
-│  ┌──────────┐  ┌──────────┐  ┌──────────┐             │
-│  │  Models  │  │   MySQL  │  │  Redis   │             │
-│  │Eloquent  │  │ Database │  │  Cache   │             │
-│  └──────────┘  └──────────┘  └──────────┘             │
+│     MySQL + Redis Cache + File Storage                  │
 └─────────────────────────────────────────────────────────┘
 ```
 
 ### 1.2 Chiến lược Hybrid
 
-**Quyết định quan trọng:** Không xóa Filament, mà sử dụng song song!
-
-- **Filament Admin Panel:** Dành cho Admin/Super Admin quản lý toàn bộ hệ thống
-- **Vue.js Frontend:** Dành cho User thông thường (Project Manager, Developer, Client)
+**Quyết định:** Filament (Admin) + Vue.js (Users) song song
 
 **Lợi ích:**
-- Tận dụng công sức đã bỏ ra cho Filament
-- Admin có công cụ mạnh mẽ để quản lý
-- Users có trải nghiệm hiện đại, tùy biến
-- Dễ dàng mở rộng sang mobile app sau này
+- ✅ Tận dụng Filament admin panel có sẵn
+- ✅ Vue.js cho trải nghiệm user tốt hơn
+- ✅ Dễ mở rộng mobile app sau này
+- ✅ Phân quyền rõ ràng: Admin vs Users
 
 ---
 
-## 📁 II. CẤU TRÚC THƯ MỤC & FILES
+## 📁 II. CẤU TRÚC THƯ MỤC CHI TIẾT
 
-### 2.1 Cấu trúc Backend (Laravel)
+### 2.1 Backend Structure (Laravel)
 
 ```
 project-management/
@@ -68,204 +84,105 @@ project-management/
 ├── app/
 │   ├── Http/
 │   │   ├── Controllers/
-│   │   │   ├── Api/
-│   │   │   │   ├── V1/                          # API Version 1
-│   │   │   │   │   ├── Auth/
-│   │   │   │   │   │   ├── AuthController.php   # Login, Register, Logout
-│   │   │   │   │   │   ├── ProfileController.php # User profile management
-│   │   │   │   │   │   └── PasswordController.php # Change, Reset password
-│   │   │   │   │   │
-│   │   │   │   │   ├── Dashboard/
-│   │   │   │   │   │   ├── DashboardController.php # Overview stats
-│   │   │   │   │   │   └── WidgetController.php    # Dashboard widgets
-│   │   │   │   │   │
-│   │   │   │   │   ├── Project/
-│   │   │   │   │   │   ├── ProjectController.php       # CRUD projects
-│   │   │   │   │   │   ├── ProjectMemberController.php # Manage members
-│   │   │   │   │   │   ├── ProjectSettingController.php
-│   │   │   │   │   │   └── ProjectStatController.php   # Project statistics
-│   │   │   │   │   │
-│   │   │   │   │   ├── Ticket/
-│   │   │   │   │   │   ├── TicketController.php         # CRUD tickets
-│   │   │   │   │   │   ├── TicketCommentController.php  # Comments
-│   │   │   │   │   │   ├── TicketHourController.php     # Log hours
-│   │   │   │   │   │   ├── TicketActivityController.php # Activity log
-│   │   │   │   │   │   ├── TicketAttachmentController.php
-│   │   │   │   │   │   └── TicketRelationController.php # Ticket relations
-│   │   │   │   │   │
-│   │   │   │   │   ├── Sprint/
-│   │   │   │   │   │   ├── SprintController.php
-│   │   │   │   │   │   └── SprintBoardController.php    # Kanban board data
-│   │   │   │   │   │
-│   │   │   │   │   ├── Epic/
-│   │   │   │   │   │   └── EpicController.php
-│   │   │   │   │   │
-│   │   │   │   │   ├── RoadMap/
-│   │   │   │   │   │   └── RoadMapController.php
-│   │   │   │   │   │
-│   │   │   │   │   ├── Team/
-│   │   │   │   │   │   ├── TeamController.php
-│   │   │   │   │   │   └── TeamMemberController.php
-│   │   │   │   │   │
-│   │   │   │   │   ├── Search/
-│   │   │   │   │   │   └── SearchController.php         # Global search
-│   │   │   │   │   │
-│   │   │   │   │   ├── Notification/
-│   │   │   │   │   │   └── NotificationController.php
-│   │   │   │   │   │
-│   │   │   │   │   └── Reference/
-│   │   │   │   │       ├── TicketStatusController.php
-│   │   │   │   │       ├── TicketPriorityController.php
-│   │   │   │   │       ├── TicketTypeController.php
-│   │   │   │   │       └── ProjectStatusController.php
-│   │   │   │   │
-│   │   │   │   └── WebhookController.php        # Webhooks từ external services
-│   │   │   │
-│   │   │   └── (Giữ nguyên Filament Controllers cho Admin)
+│   │   │   └── Api/
+│   │   │       ├── AuthController.php           # Login, Register, Logout
+│   │   │       ├── ProfileController.php        # User profile
+│   │   │       ├── DashboardController.php      # Dashboard stats
+│   │   │       ├── ProjectController.php        # CRUD Projects
+│   │   │       ├── ProjectMemberController.php  # Manage members
+│   │   │       ├── TicketController.php         # CRUD Tickets
+│   │   │       ├── TicketCommentController.php  # Comments
+│   │   │       ├── TicketAttachmentController.php # File uploads
+│   │   │       ├── TicketHourController.php     # Time tracking
+│   │   │       ├── SprintController.php         # CRUD Sprints
+│   │   │       ├── SprintBoardController.php    # Kanban data
+│   │   │       ├── EpicController.php           # CRUD Epics
+│   │   │       ├── RoadmapController.php        # Roadmap timeline
+│   │   │       ├── NotificationController.php   # Notifications
+│   │   │       ├── SearchController.php         # Global search
+│   │   │       └── ReferenceController.php      # Statuses, Priorities
 │   │   │
 │   │   ├── Middleware/
-│   │   │   ├── CheckProjectAccess.php            # Verify user có access project
-│   │   │   ├── CheckTicketPermission.php
-│   │   │   ├── ApiVersionMiddleware.php
-│   │   │   └── TrackApiUsage.php                 # Analytics
+│   │   │   ├── CheckProjectAccess.php           # Verify project access
+│   │   │   └── CheckTicketPermission.php        # Verify ticket permission
 │   │   │
 │   │   ├── Requests/
-│   │   │   ├── Api/
-│   │   │   │   ├── Auth/
-│   │   │   │   │   ├── LoginRequest.php
-│   │   │   │   │   └── RegisterRequest.php
-│   │   │   │   ├── Project/
-│   │   │   │   │   ├── StoreProjectRequest.php
-│   │   │   │   │   └── UpdateProjectRequest.php
-│   │   │   │   ├── Ticket/
-│   │   │   │   │   ├── StoreTicketRequest.php
-│   │   │   │   │   ├── UpdateTicketRequest.php
-│   │   │   │   │   └── AssignTicketRequest.php
-│   │   │   │   └── Sprint/
-│   │   │   │       └── StoreSprintRequest.php
+│   │   │   ├── Auth/
+│   │   │   │   ├── LoginRequest.php
+│   │   │   │   └── RegisterRequest.php
+│   │   │   ├── ProjectRequest.php
+│   │   │   ├── TicketRequest.php
+│   │   │   ├── SprintRequest.php
+│   │   │   └── EpicRequest.php
 │   │   │
-│   │   ├── Resources/
-│   │   │   ├── Api/
-│   │   │   │   ├── V1/
-│   │   │   │   │   ├── UserResource.php          # Format JSON response
-│   │   │   │   │   ├── ProjectResource.php
-│   │   │   │   │   ├── ProjectCollection.php     # Collection format
-│   │   │   │   │   ├── TicketResource.php
-│   │   │   │   │   ├── TicketCollection.php
-│   │   │   │   │   ├── SprintResource.php
-│   │   │   │   │   ├── EpicResource.php
-│   │   │   │   │   ├── CommentResource.php
-│   │   │   │   │   └── ActivityResource.php
-│   │   │
-│   │   └── Traits/
-│   │       ├── ApiResponses.php                   # Standardize API responses
-│   │       └── HasApiPagination.php
+│   │   └── Resources/
+│   │       ├── UserResource.php
+│   │       ├── ProjectResource.php
+│   │       ├── ProjectCollection.php
+│   │       ├── TicketResource.php
+│   │       ├── TicketCollection.php
+│   │       ├── CommentResource.php
+│   │       ├── SprintResource.php
+│   │       ├── EpicResource.php
+│   │       └── ActivityResource.php
 │   │
-│   ├── Services/                                  # Business Logic Layer
-│   │   ├── Auth/
-│   │   │   ├── AuthService.php
-│   │   │   └── TokenService.php
-│   │   ├── Project/
-│   │   │   ├── ProjectService.php                 # Complex project logic
-│   │   │   └── ProjectMemberService.php
-│   │   ├── Ticket/
-│   │   │   ├── TicketService.php
-│   │   │   ├── TicketAssignmentService.php
-│   │   │   └── TicketWorkflowService.php          # Status transitions
-│   │   ├── Sprint/
-│   │   │   └── SprintService.php
-│   │   ├── Notification/
-│   │   │   └── NotificationService.php
-│   │   └── Analytics/
-│   │       └── ProjectAnalyticsService.php
+│   ├── Services/                                 # Business Logic
+│   │   ├── TicketService.php                    # Ticket operations
+│   │   ├── NotificationService.php              # Send notifications
+│   │   ├── SprintService.php                    # Sprint logic
+│   │   └── FileService.php                      # File uploads
 │   │
-│   ├── Repositories/                              # Optional: Data Access Layer
-│   │   ├── ProjectRepository.php
-│   │   ├── TicketRepository.php
-│   │   └── SprintRepository.php
+│   ├── Events/
+│   │   ├── TicketCreated.php
+│   │   ├── TicketAssigned.php
+│   │   ├── TicketStatusChanged.php
+│   │   └── TicketCommented.php
 │   │
-│   ├── Events/                                    # Domain Events
-│   │   ├── Ticket/
-│   │   │   ├── TicketCreated.php
-│   │   │   ├── TicketAssigned.php
-│   │   │   ├── TicketStatusChanged.php
-│   │   │   └── TicketCommented.php
-│   │   └── Project/
-│   │       ├── ProjectCreated.php
-│   │       └── MemberAddedToProject.php
+│   ├── Listeners/
+│   │   ├── SendTicketNotification.php
+│   │   └── LogTicketActivity.php
 │   │
-│   ├── Listeners/                                 # Event Handlers
-│   │   ├── SendTicketAssignedNotification.php
-│   │   ├── LogTicketActivity.php
-│   │   └── UpdateProjectStatistics.php
-│   │
-│   ├── Jobs/                                      # Background Jobs
-│   │   ├── SendEmailNotification.php
-│   │   ├── GenerateProjectReport.php
-│   │   └── SyncExternalData.php
-│   │
-│   ├── Observers/                                 # Model Observers
-│   │   ├── TicketObserver.php
-│   │   └── ProjectObserver.php
-│   │
-│   ├── Policies/                                  # Authorization
+│   ├── Policies/
 │   │   ├── ProjectPolicy.php
 │   │   ├── TicketPolicy.php
 │   │   └── SprintPolicy.php
 │   │
-│   ├── Models/                                    # Giữ nguyên
-│   │   └── (Đã có sẵn)
-│   │
-│   └── Filament/                                  # Giữ nguyên cho Admin
-│       └── (Đã có sẵn)
+│   ├── Models/                                   # (Giữ nguyên models hiện có)
+│   └── Filament/                                 # (Giữ nguyên Filament)
 │
 ├── routes/
-│   ├── api.php                                    # API Routes chính
-│   ├── api_v1.php                                 # Tách routes API v1 ra riêng
-│   ├── web.php                                    # Giữ cho Filament
-│   └── channels.php                               # Broadcasting channels
-│
-├── config/
-│   ├── cors.php                                   # CORS configuration
-│   ├── sanctum.php                                # Sanctum config
-│   └── api.php                                    # API custom config
+│   ├── api.php                                   # API routes
+│   ├── web.php                                   # Filament routes
+│   └── channels.php                              # Broadcasting channels
 │
 ├── database/
-│   ├── migrations/                                # Giữ nguyên
-│   ├── seeders/
-│   │   ├── DatabaseSeeder.php
-│   │   ├── UserSeeder.php
-│   │   ├── ProjectSeeder.php
-│   │   ├── TicketSeeder.php
-│   │   └── ReferenceDataSeeder.php               # Statuses, Priorities, Types
-│   └── factories/                                 # Giữ nguyên
+│   ├── migrations/                               # (Giữ nguyên)
+│   └── seeders/
+│       ├── DatabaseSeeder.php
+│       ├── UserSeeder.php
+│       ├── ProjectSeeder.php
+│       ├── TicketSeeder.php
+│       └── ReferenceDataSeeder.php              # Statuses, Priorities
 │
 ├── tests/
 │   ├── Feature/
-│   │   ├── Api/
-│   │   │   ├── Auth/
-│   │   │   │   ├── LoginTest.php
-│   │   │   │   └── RegisterTest.php
-│   │   │   ├── Project/
-│   │   │   │   ├── ProjectCrudTest.php
-│   │   │   │   └── ProjectAuthorizationTest.php
-│   │   │   └── Ticket/
-│   │   │       └── TicketCrudTest.php
-│   │   └── (Giữ Filament tests)
-│   │
+│   │   └── Api/
+│   │       ├── AuthTest.php
+│   │       ├── ProjectTest.php
+│   │       ├── TicketTest.php
+│   │       └── SprintTest.php
 │   └── Unit/
-│       ├── Services/
-│       │   ├── ProjectServiceTest.php
-│       │   └── TicketServiceTest.php
-│       └── Models/
+│       └── Services/
+│           └── TicketServiceTest.php
 │
 └── storage/
-    └── api-docs/                                  # API Documentation
-        ├── openapi.yaml                           # OpenAPI/Swagger spec
-        └── postman_collection.json
+    ├── app/
+    │   └── public/
+    │       └── attachments/                      # Uploaded files
+    └── logs/
 ```
 
-### 2.2 Cấu trúc Frontend (Vue.js)
+### 2.2 Frontend Structure (Vue.js)
 
 ```
 frontend-vue/
@@ -275,197 +192,154 @@ frontend-vue/
 │   └── index.html
 │
 ├── src/
-│   ├── main.js                                    # App entry point
-│   ├── App.vue                                    # Root component
+│   ├── main.js                                   # Entry point
+│   ├── App.vue                                   # Root component
 │   │
 │   ├── router/
-│   │   ├── index.js                               # Main router
+│   │   ├── index.js                              # Main router
 │   │   └── guards/
-│   │       ├── auth.guard.js                      # Check authentication
-│   │       └── permission.guard.js                # Check permissions
+│   │       └── auth.guard.js                     # Auth check
 │   │
-│   ├── store/                                     # Vuex/Pinia State Management
-│   │   ├── index.js
-│   │   ├── modules/
-│   │   │   ├── auth.js                            # Authentication state
-│   │   │   ├── user.js                            # Current user info
-│   │   │   ├── projects.js                        # Projects state
-│   │   │   ├── tickets.js                         # Tickets state
-│   │   │   ├── sprints.js                         # Sprints state
-│   │   │   ├── notifications.js                   # Real-time notifications
-│   │   │   └── ui.js                              # UI state (sidebar, theme)
+│   ├── stores/                                   # Pinia State Management
+│   │   ├── auth.js                               # Auth state
+│   │   ├── user.js                               # Current user
+│   │   ├── projects.js                           # Projects state
+│   │   ├── tickets.js                            # Tickets state
+│   │   ├── sprints.js                            # Sprints state
+│   │   ├── notifications.js                      # Notifications
+│   │   └── ui.js                                 # UI state (sidebar, theme)
 │   │
-│   ├── api/                                       # API Communication Layer
-│   │   ├── client.js                              # Axios instance with interceptors
-│   │   ├── endpoints/
-│   │   │   ├── auth.api.js                        # Auth API calls
-│   │   │   ├── projects.api.js                    # Project API calls
-│   │   │   ├── tickets.api.js                     # Ticket API calls
-│   │   │   ├── sprints.api.js                     # Sprint API calls
-│   │   │   ├── users.api.js                       # User API calls
-│   │   │   └── reference.api.js                   # Reference data
-│   │   └── interceptors/
-│   │       ├── auth.interceptor.js                # Add tokens to requests
-│   │       ├── error.interceptor.js               # Handle errors globally
-│   │       └── response.interceptor.js            # Transform responses
+│   ├── api/                                      # API Layer
+│   │   ├── axios.js                              # Axios instance
+│   │   ├── auth.api.js                           # Auth endpoints
+│   │   ├── projects.api.js                       # Project endpoints
+│   │   ├── tickets.api.js                        # Ticket endpoints
+│   │   ├── sprints.api.js                        # Sprint endpoints
+│   │   ├── epics.api.js                          # Epic endpoints
+│   │   ├── notifications.api.js                  # Notification endpoints
+│   │   └── search.api.js                         # Search endpoint
 │   │
-│   ├── views/                                     # Page Components
+│   ├── views/                                    # Page Components
 │   │   ├── auth/
 │   │   │   ├── LoginView.vue
 │   │   │   ├── RegisterView.vue
-│   │   │   ├── ForgotPasswordView.vue
-│   │   │   └── ResetPasswordView.vue
+│   │   │   └── ForgotPasswordView.vue
 │   │   │
 │   │   ├── dashboard/
-│   │   │   └── DashboardView.vue                  # Main dashboard
+│   │   │   └── DashboardView.vue                 # Main dashboard
 │   │   │
 │   │   ├── projects/
-│   │   │   ├── ProjectListView.vue                # All projects
-│   │   │   ├── ProjectDetailView.vue              # Single project overview
-│   │   │   ├── ProjectSettingsView.vue            # Project settings
-│   │   │   ├── ProjectMembersView.vue             # Manage members
-│   │   │   └── ProjectCreateView.vue              # Create new project
+│   │   │   ├── ProjectListView.vue               # All projects
+│   │   │   ├── ProjectDetailView.vue             # Project overview
+│   │   │   ├── ProjectSettingsView.vue           # Settings
+│   │   │   └── ProjectMembersView.vue            # Members
 │   │   │
 │   │   ├── tickets/
-│   │   │   ├── TicketBoardView.vue                # Kanban board
-│   │   │   ├── TicketListView.vue                 # Table view
-│   │   │   ├── TicketDetailView.vue               # Single ticket detail
-│   │   │   └── TicketCreateView.vue               # Create/Edit ticket
+│   │   │   ├── TicketBoardView.vue               # Kanban board
+│   │   │   ├── TicketListView.vue                # Table view
+│   │   │   └── TicketDetailView.vue              # Ticket detail
 │   │   │
 │   │   ├── sprints/
 │   │   │   ├── SprintListView.vue
-│   │   │   ├── SprintBoardView.vue                # Sprint kanban
-│   │   │   └── SprintReportView.vue               # Sprint report/burndown
+│   │   │   ├── SprintBoardView.vue               # Sprint kanban
+│   │   │   └── SprintReportView.vue              # Burndown chart
 │   │   │
 │   │   ├── roadmap/
-│   │   │   └── RoadmapView.vue                    # Visual roadmap
-│   │   │
-│   │   ├── team/
-│   │   │   └── TeamView.vue                       # Team members
-│   │   │
-│   │   ├── reports/
-│   │   │   ├── ProjectReportsView.vue
-│   │   │   └── UserReportsView.vue
+│   │   │   └── RoadmapView.vue                   # Visual roadmap
 │   │   │
 │   │   ├── profile/
-│   │   │   ├── ProfileView.vue
-│   │   │   └── SettingsView.vue
+│   │   │   └── ProfileView.vue
 │   │   │
 │   │   └── errors/
-│   │       ├── NotFoundView.vue                   # 404
-│   │       └── UnauthorizedView.vue               # 403
+│   │       ├── NotFoundView.vue                  # 404
+│   │       └── UnauthorizedView.vue              # 403
 │   │
-│   ├── components/                                # Reusable Components
+│   ├── components/                               # Reusable Components
 │   │   ├── layout/
-│   │   │   ├── AppLayout.vue                      # Main layout wrapper
-│   │   │   ├── Sidebar.vue                        # Navigation sidebar
-│   │   │   ├── Navbar.vue                         # Top navbar
-│   │   │   ├── Footer.vue
+│   │   │   ├── AppLayout.vue                     # Main layout
+│   │   │   ├── Sidebar.vue                       # Navigation
+│   │   │   ├── Navbar.vue                        # Top bar
 │   │   │   └── Breadcrumb.vue
 │   │   │
-│   │   ├── common/
-│   │   │   ├── BaseButton.vue                     # Reusable button
-│   │   │   ├── BaseInput.vue                      # Form input
-│   │   │   ├── BaseSelect.vue
-│   │   │   ├── BaseModal.vue                      # Modal dialog
-│   │   │   ├── BaseCard.vue
-│   │   │   ├── BaseTable.vue                      # Data table
-│   │   │   ├── BasePagination.vue
-│   │   │   ├── LoadingSpinner.vue
-│   │   │   ├── EmptyState.vue
-│   │   │   └── ErrorAlert.vue
+│   │   ├── ui/                                   # UI Components
+│   │   │   ├── Button.vue
+│   │   │   ├── Input.vue
+│   │   │   ├── Select.vue
+│   │   │   ├── Modal.vue
+│   │   │   ├── Card.vue
+│   │   │   ├── Table.vue
+│   │   │   ├── Pagination.vue
+│   │   │   ├── Loading.vue
+│   │   │   └── EmptyState.vue
 │   │   │
 │   │   ├── project/
-│   │   │   ├── ProjectCard.vue                    # Project card in grid
-│   │   │   ├── ProjectStats.vue                   # Project statistics
+│   │   │   ├── ProjectCard.vue
+│   │   │   ├── ProjectStats.vue
 │   │   │   ├── ProjectMemberList.vue
-│   │   │   ├── ProjectStatusBadge.vue
-│   │   │   └── ProjectForm.vue                    # Create/Edit form
+│   │   │   └── ProjectForm.vue
 │   │   │
 │   │   ├── ticket/
-│   │   │   ├── TicketCard.vue                     # Ticket card for kanban
-│   │   │   ├── TicketRow.vue                      # Ticket row for table
-│   │   │   ├── TicketForm.vue                     # Create/Edit form
-│   │   │   ├── TicketStatusSelect.vue
+│   │   │   ├── TicketCard.vue                    # For kanban
+│   │   │   ├── TicketRow.vue                     # For table
+│   │   │   ├── TicketForm.vue
+│   │   │   ├── TicketStatusBadge.vue
 │   │   │   ├── TicketPriorityBadge.vue
-│   │   │   ├── TicketTypeBadge.vue
-│   │   │   ├── TicketComments.vue                 # Comments section
-│   │   │   ├── TicketActivity.vue                 # Activity timeline
+│   │   │   ├── TicketComments.vue
+│   │   │   ├── TicketActivity.vue
 │   │   │   ├── TicketAttachments.vue
-│   │   │   └── TicketTimeLog.vue                  # Hour logging
+│   │   │   └── TicketTimeLog.vue
 │   │   │
 │   │   ├── sprint/
 │   │   │   ├── SprintCard.vue
-│   │   │   ├── SprintBoard.vue                    # Kanban board component
+│   │   │   ├── SprintBoard.vue                   # Kanban component
 │   │   │   ├── BurndownChart.vue
 │   │   │   └── SprintProgress.vue
 │   │   │
+│   │   ├── epic/
+│   │   │   └── EpicTimeline.vue
+│   │   │
 │   │   ├── user/
 │   │   │   ├── UserAvatar.vue
-│   │   │   ├── UserSelect.vue                     # Dropdown to select user
-│   │   │   └── UserCard.vue
+│   │   │   └── UserSelect.vue
 │   │   │
 │   │   ├── charts/
 │   │   │   ├── LineChart.vue
 │   │   │   ├── BarChart.vue
-│   │   │   ├── PieChart.vue
-│   │   │   └── DoughnutChart.vue
+│   │   │   └── PieChart.vue
 │   │   │
 │   │   └── notifications/
 │   │       ├── NotificationBell.vue
-│   │       ├── NotificationDropdown.vue
-│   │       └── NotificationItem.vue
+│   │       └── NotificationDropdown.vue
 │   │
-│   ├── composables/                               # Vue Composition API
-│   │   ├── useAuth.js                             # Authentication logic
-│   │   ├── useProjects.js                         # Project operations
-│   │   ├── useTickets.js                          # Ticket operations
+│   ├── composables/                              # Composition API
+│   │   ├── useAuth.js
+│   │   ├── useProjects.js
+│   │   ├── useTickets.js
 │   │   ├── useSprints.js
 │   │   ├── useNotifications.js
-│   │   ├── useWebSocket.js                        # Real-time updates
-│   │   ├── usePagination.js
-│   │   ├── useDebounce.js
-│   │   └── usePermissions.js                      # Check user permissions
+│   │   ├── useWebSocket.js                       # Real-time
+│   │   └── useDragDrop.js
 │   │
-│   ├── utils/                                     # Utility Functions
-│   │   ├── validators.js                          # Form validation rules
-│   │   ├── formatters.js                          # Date, number formatting
-│   │   ├── helpers.js                             # Generic helpers
-│   │   ├── constants.js                           # App constants
-│   │   └── permissions.js                         # Permission definitions
+│   ├── utils/
+│   │   ├── validators.js
+│   │   ├── formatters.js                         # Date, number format
+│   │   ├── constants.js
+│   │   └── permissions.js
 │   │
-│   ├── plugins/                                   # Vue Plugins
-│   │   ├── axios.js                               # Axios setup
-│   │   ├── vuelidate.js                           # Form validation
-│   │   ├── toast.js                               # Toast notifications
-│   │   └── charts.js                              # Chart.js setup
+│   ├── plugins/
+│   │   ├── axios.js
+│   │   ├── toast.js                              # Toast notifications
+│   │   └── charts.js                             # Chart.js
 │   │
-│   ├── directives/                                # Custom Directives
-│   │   ├── click-outside.js
-│   │   ├── tooltip.js
-│   │   └── permission.js                          # v-permission directive
-│   │
-│   ├── assets/
-│   │   ├── styles/
-│   │   │   ├── main.css                           # Main CSS
-│   │   │   ├── variables.css                      # CSS variables
-│   │   │   ├── tailwind.css                       # Tailwind imports
-│   │   │   └── components/                        # Component-specific styles
-│   │   ├── images/
-│   │   └── icons/
-│   │
-│   └── types/                                     # TypeScript definitions (nếu dùng TS)
-│       ├── api.types.ts
-│       ├── project.types.ts
-│       └── ticket.types.ts
+│   └── assets/
+│       ├── styles/
+│       │   ├── main.css
+│       │   └── tailwind.css
+│       └── images/
 │
-├── .env.development                               # Dev environment variables
-├── .env.production                                # Prod environment variables
-├── vite.config.js                                 # Vite configuration
-├── tailwind.config.js                             # Tailwind CSS config
-├── package.json
-└── README.md
+├── .env.development
+├── .env.production
+├── vite.config.js
+├── tailwind.config.js
+└── package.json
 ```
-
----
-
