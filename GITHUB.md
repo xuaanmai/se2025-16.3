@@ -1,209 +1,214 @@
-# Quy trình làm việc GitHub cho Dự án Project Management  
+# Quy trình làm việc GitHub (Phiên bản Đơn giản hóa)
 (Laravel + Vue.js)
 
-Đây là tài liệu quy định luồng làm việc (workflow) bắt buộc cho tất cả thành viên trong dự án. Mục tiêu là đảm bảo code luôn ổn định, giảm thiểu xung đột (conflict) và quản lý tiến độ hiệu quả.
+Đây là tài liệu quy định luồng làm việc (workflow) **đơn giản hóa** cho dự án. Mục tiêu là để 4 thành viên phối hợp nhịp nhàng, chỉ sử dụng các tính năng có sẵn của GitHub.
 
-Sự tuân thủ nghiêm ngặt quy trình này là chìa khóa để hoàn thành dự án trong 2 tháng.
+Mô hình này được gọi là **GitHub Flow**: rất nhanh, gọn, và mọi thứ đều xoay quanh nhánh `main`.
 
 ---
 
 ## 1. Thiết lập ban đầu (Làm 1 lần)
 
-Người Lead (hoặc người tạo) sẽ thực hiện các bước này.
+Người Lead sẽ thực hiện các bước này.
 
 ### 1.1. Cấu hình Repository
 
-Chúng ta sẽ sử dụng **2 repository riêng biệt**:
+Chúng ta vẫn sử dụng **2 repository riêng biệt**:
 1.  `project-management-api` (Cho Laravel Backend)
 2.  `project-management-web` (Cho Vue.js Frontend)
 
 **Với mỗi repository:**
 1.  Tạo repository trên GitHub, chọn **Private**.
-2.  **Quan trọng:** Check vào "Add a README file" và "Add .gitignore".
-    * Repo `project-management-api`, chọn `.gitignore` template là **Laravel**.
-    * Repo `project-management-web`, chọn `.gitignore` template là **Vue**.
+2.  Check "Add a README file" và "Add .gitignore" (Chọn template `Laravel` hoặc `Vue` tương ứng).
 3.  Vào **Settings** > **Collaborators** > Mời 3 thành viên còn lại vào.
 
-### 1.2. Cấu hình `.gitignore`
+### 1.2. Cấu hình `.gitignore` (Bắt buộc)
 
-**Trong repo `project-management-api` (Laravel):**
-```gitignore
-.env
-.env.testing
+File này đảm bảo bạn không "commit" file rác, file thư viện (`vendor`, `node_modules`) hoặc file nhạy cảm (`.env`) lên GitHub.
+
+**Repo `project-management-api` (Laravel):**
+
 /vendor/
 /node_modules/
+.env
+.env.testing
 /storage/app/public/
 /public/storage
 .DS_Store
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
-```
 
-**Trong repo `project-management-web` (Vue.js):**
-```gitignore
+**Repo `project-management-web` (Vue.js):**
+
+/node_modules/
+/dist/
 .env.local
 .env.development.local
 .env.production.local
 .env.test.local
-/node_modules/
-/dist/
 .DS_Store
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
-```
 
-### 1.3. File môi trường `.env`
-Tạo file `.env.example` trong cả 2 repo, copy từ `.env` và **xóa giá trị nhạy cảm**, sau đó commit lên.
+### 1.3. File môi trường `.env.example`
 
----
+Vì `.env` bị bỏ qua, mọi người cần file mẫu để chạy code:
 
-## 2. Mô hình phân nhánh (Branching Model)
-
-### 2.1. Các nhánh chính
-- **`main`**: Code hoàn thiện, sẵn sàng deploy. 🚫 Không push trực tiếp.  
-- **`develop`**: Code tích hợp (beta). 🚫 Không push trực tiếp.
-
-### 2.2. Các nhánh hỗ trợ
-- `feature/<ten-tinh-nang>` → Tạo từ `develop`, merge về `develop`
-- `bugfix/<ten-bug>` → Tạo từ `develop`, merge về `develop`
-- `hotfix/<ten-loi-nghiem-trong>` → Tạo từ `main`, merge về `main` và `develop`
-
-### 2.3. Bảo vệ nhánh
-Cấu hình trong GitHub:
-- **main**: Require pull request + Require 1 approval  
-- **develop**: Require pull request + (Optional) Require approvals
+1.  Tạo file `.env.example` trong cả 2 repo.
+2.  Copy tên các biến từ `.env` vào `.env.example` (xóa hết giá trị nhạy cảm).
+3.  Commit file `.env.example` này lên.
+4.  Khi thành viên khác clone về, họ chỉ cần copy file này thành `.env` và tự điền thông tin của mình.
 
 ---
 
-## 3. Quản lý công việc (Issues & Projects)
+## 2. Mô hình phân nhánh (Siêu đơn giản)
 
-### 3.1. Milestones
-Được Lead tạo theo **Gantt Chart** (ví dụ: Tuần 1 - Auth, Tuần 2 - Project Module...).  
-👉 **Gantt Chart chính là bản kế hoạch tiến độ chia theo tuần**, thể hiện bằng **Milestone + Kanban Board** trong GitHub Projects.
+Chúng ta **CHỈ** dùng 2 loại nhánh:
 
-### 3.2. Issues
-Mỗi nhiệm vụ = 1 Issue.  
-Ví dụ: `[API] Tạo AuthController`.  
-Có **Title**, **Description**, **Assignee**, **Labels**, **Milestone**.
+1.  **`main` (Nhánh chính):**
+   - Đây là nhánh **duy nhất** tồn tại vĩnh viễn.  
+   - Đại diện cho code **ổn định nhất**, sẵn sàng để chạy (deploy).  
+   - **QUY TẮC VÀNG:** **TUYỆT ĐỐI CẤM** push code trực tiếp lên `main`.  
+     Mọi code đưa lên `main` **BẮT BUỘC** phải qua Pull Request và được ít nhất 1 người khác review.
 
-### 3.3. Projects (Kanban Board)
-Cột: `To Do`, `In Progress`, `Needs Review`, `Done`.  
-Kéo Issue tương ứng qua từng cột theo tiến trình làm việc.
+2.  **`feature/<ten-tinh-nang>` (Nhánh tính năng):**
+   - Đây là nhánh tạm thời để bạn code một tính năng mới.  
+   - **Tạo từ:** `main`.  
+   - **Merge về:** `main`.  
+   - **Ví dụ:** `feature/auth-controller`, `feature/login-view`.  
+   - Nhánh này sẽ được **xóa ngay lập tức** sau khi merge vào `main`.
+
+### Cài đặt bảo vệ nhánh `main` (Bắt buộc)
+
+Người Lead vào **Settings > Branches > Add branch protection rule**:
+- Branch name pattern: `main`
+- Check: **Require a pull request before merging**
+- Check: **Require approvals** (Chọn `1`)
 
 ---
 
-## 4. Vòng đời của một tính năng
+## 3. Quản lý công việc (100% bằng GitHub)
 
-### Bước 1: Nhận việc
-- Gán Issue cho mình.  
-- Kéo sang **In Progress** trong Kanban.
+Chúng ta chỉ dùng **GitHub Issues** (để tạo task) và **GitHub Projects** (để xem task đó dưới dạng bảng).
 
-### Bước 2: Cập nhật code mới nhất
-```bash
-git checkout develop
-git pull origin develop
-```
+> **Lưu ý:** "GitHub Projects" là một tính năng **có sẵn** của GitHub, nó hiển thị trực quan các "Issues", giống như Trello/Jira nhưng tích hợp 100%.
 
-### Bước 3: Tạo nhánh làm việc
-```bash
+### 3.1. Tạo Nhiệm vụ (GitHub Issues)
+
+- Mọi task phải được tạo thành **Issue**.
+- Vào tab **Issues > New Issue**.
+- **Title:** `[API] Tạo CRUD cho ProjectController`
+- **Assignees:** Người thực hiện.
+- **Labels:** `backend`, `frontend`, `bug`, `feature`, ...
+
+### 3.2. Trực quan hóa bằng Bảng (GitHub Projects)
+
+1. Vào tab **Projects > New project > Board**.  
+2. Tạo 4 cột: `To Do`, `In Progress`, `Needs Review`, `Done`.  
+3. Vào mục "Automation":  
+   - Khi Issue tạo → thêm vào `To Do`.  
+   - Khi mở Pull Request → sang `Needs Review`.  
+   - Khi PR merge → sang `Done`.
+
+---
+
+## 4. Luồng làm việc hàng ngày (Vòng đời của một tính năng)
+
+Giả sử bạn được giao **Issue #12: [API] Tạo ProjectController**.
+
+### Bước 1: Bắt đầu nhiệm vụ
+- Gán Issue cho mình.
+- Kéo sang `In Progress` nếu có bảng Projects.
+
+### Bước 2: Lấy code mới nhất
+
+git checkout main
+git pull origin main
+
+### Bước 3: Tạo nhánh mới
+
 git checkout -b feature/12-project-controller
-```
 
-### Bước 4: Code + Commit
-```bash
+### Bước 4: Code và Commit
+
+git status
 git add .
-git commit -m "Feat(API): Thêm ProjectController CRUD"
-```
+git commit -m "Feat(API): Thêm ProjectController hàm store và validation"
 
-#### Convention Commit:
-- `Feat:` – thêm tính năng
-- `Fix:` – sửa lỗi
-- `Refactor:` – tối ưu
-- `Chore:` – cập nhật phụ
-- `Docs:` – chỉnh tài liệu
+**Quy tắc viết Commit Message:**
+- `Feat:` thêm tính năng mới.
+- `Fix:` sửa lỗi.
+- `Refactor:` tối ưu code.
+- `Chore:` việc phụ.
+- `Docs:` viết/sửa tài liệu.
 
-### Bước 5: Push lên GitHub
-```bash
+### Bước 5: Đẩy code lên GitHub
+
 git push -u origin feature/12-project-controller
-```
 
 ### Bước 6: Tạo Pull Request (PR)
-- Base: `develop` ← Compare: `feature/...`
-- Title: `Feat(API): Hoàn thành ProjectController CRUD`
-- Description: `Closes #12`
-- Reviewer: 1–2 người
-- Issue chuyển sang **Needs Review**
+
+- Lên GitHub → "Compare & pull request"
+- Base: `main`, Compare: `feature/...`
+- **Title:** `Feat(API): Hoàn thành ProjectController CRUD`
+- **Description:** Gõ `Closes #12`
+- Tag Reviewer: 1-2 người
+- Issue tự động nhảy sang `Needs Review`
 
 ---
 
-## 5. Review & Merge
+## 5. Quy trình Code Review & Merge
 
-### Reviewer
-- Vào tab “Files changed” → Kiểm tra code  
-- Dùng **Approve** hoặc **Request changes**
+### Reviewer:
+- Kiểm tra logic, bug, style.
+- Comment góp ý.
+- Approve hoặc Request Changes.
 
-### Tác giả PR
-- Nếu cần sửa:
-```bash
-git add .
-git commit -m "Fix(Review): Sửa theo góp ý reviewer"
-git push
-```
+### Người tạo PR:
+- Sửa code theo góp ý.
+- Commit lại với `Fix(Review): ...`
+- Push → PR tự cập nhật.
 
-### Merge
-Khi PR được approve:
-- Chọn **“Squash and merge”**  
-- Xóa nhánh feature
+### Merge:
+- Khi PR được Approve → chọn **"Squash and merge"**.
+- Xóa nhánh `feature` sau khi merge.
 
-Sau đó:
-```bash
-git checkout develop
-git pull origin develop
+### Sau khi merge (dọn dẹp):
+
+git checkout main
+git pull origin main
 git branch -d feature/12-project-controller
-```
 
 ---
 
-## 6. Giải quyết Conflict
+## 6. Xử lý Xung đột (Merge Conflict)
 
-### Khi bị conflict
-```bash
-git checkout develop
-git pull origin develop
+git checkout main
+git pull origin main
 git checkout feature/12-project-controller
-git merge develop
-```
+git merge main
 
-- Mở file có conflict, chỉnh thủ công:
-```
-<<<<<<< HEAD
-(code của bạn)
-=======
-(code của develop)
->>>>>>> develop
-```
-- Sau đó:
-```bash
+Nếu có conflict:
+- Mở file có `<<<<<<<`, `=======`, `>>>>>>>`
+- Sửa hợp lý
+- Sau khi xong:
+
 git add .
-git commit -m "Merge: giải quyết conflict với develop"
+git commit -m "Merge: Hợp nhất main vào feature và giải quyết conflict"
 git push
-```
 
 ---
 
-## 7. CI/CD với GitHub Actions
+## 7. (Tùy chọn) Tự động hóa với GitHub Actions
 
-### Laravel CI
-Tạo file `.github/workflows/laravel.yml`
-```yaml
+Tạo thư mục `.github/workflows/` trong mỗi repo.
+
+### 7.1. Cho Backend (Laravel)
+File: `.github/workflows/laravel.yml`
+
 name: Laravel CI
 on:
   push:
-    branches: [ "main", "develop" ]
+    branches: [ "main" ]
   pull_request:
-    branches: [ "develop" ]
+    branches: [ "main" ]
+
 jobs:
   laravel-tests:
     runs-on: ubuntu-latest
@@ -221,22 +226,22 @@ jobs:
       run: |
         mkdir -p database
         touch database/database.sqlite
-    - name: Run Migrations & Tests
+    - name: Run Migrations & Tests (PHPUnit/Pest)
       env:
         DB_CONNECTION: sqlite
         DB_DATABASE: database/database.sqlite
       run: php artisan test
-```
 
-### Vue CI
-Tạo file `.github/workflows/vue.yml`
-```yaml
+### 7.2. Cho Frontend (Vue.js)
+File: `.github/workflows/vue.yml`
+
 name: Vue CI
 on:
   push:
-    branches: [ "main", "develop" ]
+    branches: [ "main" ]
   pull_request:
-    branches: [ "develop" ]
+    branches: [ "main" ]
+
 jobs:
   build-and-test:
     runs-on: ubuntu-latest
@@ -249,54 +254,18 @@ jobs:
         cache: 'npm'
     - name: Install Dependencies
       run: npm install
-    - name: Run Linter
+    - name: Run Linter (ESLint)
       run: npm run lint
-    - name: Run Tests
+    - name: Run Tests (Vitest/Jest)
       run: npm run test:unit
-```
 
 ---
 
-## 8. Kết nối giữa GitHub và Gantt Chart
+## 🎯 Tổng kết
 
-**Gantt Chart = Milestones + Kanban Workflow**
+- **Chỉ 1 nhánh chính (`main`)** → sạch sẽ, dễ kiểm soát.  
+- **Mỗi tính năng = 1 nhánh feature riêng** → tách biệt, dễ review.  
+- **Mọi PR đều cần review** → đảm bảo chất lượng code.  
+- **GitHub Projects + Issues** → quản lý trực quan, không cần tool ngoài.  
+- **GitHub Actions** → tự động kiểm thử, đảm bảo ổn định trước khi merge.
 
-| Tuần | Milestone | Trạng thái | Mô tả |
-|------|------------|------------|-------|
-| Tuần 1 | Auth & User Module | 🟢 Done | Đăng ký, đăng nhập, phân quyền |
-| Tuần 2 | Project CRUD | 🟡 In Progress | Tạo/sửa/xóa dự án |
-| Tuần 3 | Task Module | 🔵 To Do | Quản lý công việc trong project |
-| Tuần 4 | Kanban UI | ⚪ Pending | Giao diện kéo thả |
-| Tuần 5 | Reports & Dashboard | ⚪ Pending | Thống kê tiến độ |
-| Tuần 6 | Final Testing | ⚪ Pending | Kiểm thử & Fix lỗi |
-
-> 👉 Bảng này chính là **bản Gantt Chart rút gọn**, giúp theo dõi tiến độ tổng thể theo thời gian.
-
----
-
-## ✅ Tóm tắt Quy trình Nhóm
-
-| Giai đoạn | Người thực hiện | Hành động chính |
-|------------|----------------|----------------|
-| Khởi tạo Repo | Lead | Tạo `main`, `develop`, cấu hình rule |
-| Lập kế hoạch | Lead | Tạo Milestones + Issues |
-| Phát triển | Dev | Code trên nhánh `feature/...` |
-| Review | Reviewer | Approve hoặc Request changes |
-| Merge | Lead/Dev | Squash merge vào `develop` |
-| Kiểm thử & CI | GitHub Action | Tự động test trước khi merge |
-| Tổng hợp | Lead | Gộp `develop` → `main` sau khi ổn định |
-
----
-
-**📦 Cuối cùng:**  
-Khi dự án hoàn tất, Lead sẽ:
-```bash
-git checkout main
-git merge develop
-git push origin main
-```
-→ Đây là phiên bản chính thức để deploy.
-
----
-
-> 🧭 *Toàn bộ quy trình này cần được tuân thủ tuyệt đối để đảm bảo dự án đi đúng tiến độ và tránh xung đột code.*
