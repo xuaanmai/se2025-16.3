@@ -63,19 +63,36 @@ class PermissionsSeeder extends Seeder
         }
 
         // Create default role
-        $role = Role::firstOrCreate([
+        $defaultRole = Role::firstOrCreate([
             'name' => $this->defaultRole
         ]);
         $settings = app(GeneralSettings::class);
-        $settings->default_role = $role->id;
+        $settings->default_role = $defaultRole->id;
         $settings->save();
 
         // Add all permissions to default role
-        $role->syncPermissions(Permission::all()->pluck('name')->toArray());
+        $defaultRole->syncPermissions(Permission::all()->pluck('name')->toArray());
 
-        // Assign default role to first database user
-        if ($user = User::first()) {
-            $user->syncRoles([$this->defaultRole]);
+        // Create Admin role
+        $adminRole = Role::firstOrCreate([
+            'name' => 'Admin'
+        ]);
+        
+        // Add all permissions to Admin role
+        $adminRole->syncPermissions(Permission::all()->pluck('name')->toArray());
+
+        // Assign Admin role to john.doe@helper.app user (only this user will be admin)
+        $adminUser = User::where('email', 'john.doe@helper.app')->first();
+        if ($adminUser) {
+            $adminUser->syncRoles([$adminRole]);
+        }
+
+        // Assign default role to other users (not the admin user)
+        $otherUsers = User::where('email', '!=', 'john.doe@helper.app')->get();
+        foreach ($otherUsers as $user) {
+            if ($user->roles->isEmpty()) {
+                $user->syncRoles([$this->defaultRole]);
+            }
         }
     }
 }

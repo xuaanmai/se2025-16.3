@@ -43,7 +43,14 @@ class TicketStatusSeeder extends Seeder
     public function run()
     {
         foreach ($this->data as $item) {
-            TicketStatus::firstOrCreate($item);
+            // Đảm bảo project_id = null cho statuses mặc định
+            $item['project_id'] = null;
+            
+            // Tìm kiếm theo name và project_id = null để tránh duplicate
+            TicketStatus::firstOrCreate(
+                ['name' => $item['name'], 'project_id' => null],
+                $item
+            );
         }
     }
 }
