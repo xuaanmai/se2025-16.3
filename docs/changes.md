@@ -1,5 +1,13 @@
 # Change Log
 
+## Triển khai Gantt Chart (11/12/2025)
+- **Thêm tính năng Gantt Chart cho Project:**
+  - Cài đặt thư viện `frappe-gantt` để hiển thị biểu đồ Gantt.
+  - Tạo API endpoint mới `GET /api/projects/{project}/gantt` để cung cấp dữ liệu.
+  - Thêm phương thức `getGanttData` vào `RoadMapController` để xử lý logic.
+  - Tạo component `ProjectGantt.vue` để hiển thị biểu đồ.
+  - Tích hợp biểu đồ vào trang chi tiết dự án thông qua một tab "Gantt" mới, sử dụng nested routes của Vue Router.
+
 ## Cải tiến & Hoàn thiện Giao diện (11/12/2025)
 - **Tài liệu hóa nghiệp vụ:**
   - Tạo file `docs/BUSINESS_LOGIC.md` để định nghĩa chi tiết các yêu cầu nghiệp vụ mở rộng.

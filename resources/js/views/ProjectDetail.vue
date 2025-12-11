@@ -9,7 +9,7 @@
         <button 
           v-for="tab in tabs" 
           :key="tab.name" 
-          @click="currentTab = tab.name"
+          @click="handleTabClick(tab)"
           :class="[
             currentTab === tab.name 
               ? 'border-blue-500 text-blue-600' 
@@ -31,6 +31,7 @@
 
     <!-- Tab Content -->
     <div>
+      <router-view v-if="currentTab === 'Gantt'"></router-view>
       <div v-if="currentTab === 'Tickets'">
         <ProjectTickets :project-id="projectId" />
       </div>
@@ -61,8 +62,8 @@
 </template>
 
 <script setup>
-import { ref, onMounted, computed } from 'vue';
-import { useRoute } from 'vue-router';
+import { ref, onMounted, computed, watch } from 'vue';
+import { useRoute, useRouter } from 'vue-router';
 import { useProjectsStore } from '@/stores/projects';
 import { useAuthStore } from '@/stores';
 import { useTicketsStore } from '@/stores/tickets';
@@ -71,6 +72,7 @@ import ProjectTickets from '../components/Projects/ProjectTickets.vue';
 import TicketFormModal from '../components/Tickets/TicketFormModal.vue';
 
 const route = useRoute();
+const router = useRouter();
 const projectsStore = useProjectsStore();
 const authStore = useAuthStore();
 const ticketsStore = useTicketsStore();
@@ -79,12 +81,36 @@ const project = computed(() => projectsStore.project);
 const projectId = route.params.id;
 
 const tabs = [
-  { name: 'Tickets' },
-  { name: 'Members' },
-  { name: 'Sprints' },
-  { name: 'Settings' },
+  { name: 'Tickets', routeName: 'ProjectDetail' },
+  { name: 'Gantt', routeName: 'projects.gantt' },
+  { name: 'Members', routeName: 'ProjectDetail' },
+  { name: 'Sprints', routeName: 'ProjectDetail' },
+  { name: 'Settings', routeName: 'ProjectDetail' },
 ];
 const currentTab = ref('Tickets');
+
+// Sync tab with route
+watch(route, (to) => {
+  if (to.name === 'projects.gantt') {
+    currentTab.value = 'Gantt';
+  } else if (to.name === 'ProjectDetail' && currentTab.value === 'Gantt') {
+    // If navigating back to detail from gantt, reset to a default tab
+    currentTab.value = 'Tickets';
+  }
+}, { immediate: true });
+
+
+const handleTabClick = (tab) => {
+  currentTab.value = tab.name;
+  if (tab.name === 'Gantt') {
+    router.push({ name: 'projects.gantt', params: { id: projectId } });
+  } else {
+    // If the current route is the gantt chart, navigate back to the parent project detail
+    if (route.name === 'projects.gantt') {
+      router.push({ name: 'ProjectDetail', params: { id: projectId } });
+    }
+  }
+}
 
 // Permissions
 const canManageProject = computed(() => {

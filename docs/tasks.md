@@ -821,6 +821,30 @@
 - Mô tả: RoadMap page với Gantt chart
 - Files: `resources/js/views/RoadMap.vue`
 
+**Task: Triển khai Gantt Chart cho Project**
+- Mô tả: Triển khai biểu đồ Gantt cho từng dự án để trực quan hóa tiến độ công việc.
+- Files: `resources/js/views/ProjectGantt.vue`, `app/Http/Controllers/Api/Pages/RoadMapController.php`
+- Trạng thái: **Hoàn thành (Phiên bản cơ bản)**
+- Checklist:
+  - [x] Cài đặt thư viện `frappe-gantt`.
+  - [x] Tạo API endpoint `GET /api/projects/{project}/gantt`.
+  - [x] Tạo Vue component `ProjectGantt.vue` để hiển thị biểu đồ.
+  - [x] Tích hợp component vào trang chi tiết dự án dưới dạng một tab.
+
+**Task: Nâng cấp và Chuyên nghiệp hóa Gantt Chart**
+- Mô tả: Nâng cấp tính năng Gantt Chart để tận dụng tối đa khả năng của thư viện, biến nó thành một công cụ quản lý chuyên nghiệp.
+- Trạng thái: **Kế hoạch**
+- **Giai đoạn 1: Hoàn thiện Dữ liệu và Hiển thị**
+  - [ ] **Hiển thị Phụ thuộc (Dependencies):** Cập nhật API để đọc `ticket_relations` và vẽ đường phụ thuộc giữa các công việc.
+  - [ ] **Màu sắc Động theo Trạng thái:** Thêm `custom_class` vào API để tô màu các thanh công việc theo trạng thái (To Do, In Progress, Done).
+  - [ ] **Tooltip Chi tiết:** Tùy chỉnh sự kiện `on_click` để hiển thị popup với thông tin chi tiết của công việc.
+- **Giai đoạn 2: Tương tác hai chiều**
+  - [ ] **Lưu thay đổi Ngày (Kéo-thả):** Tạo API `PUT /api/tickets/{id}/dates` và xử lý sự kiện `on_date_change` để lưu ngày mới vào database.
+  - [ ] **Mở Modal Chi tiết để Chỉnh sửa:** Nâng cấp sự kiện `on_click` để mở `TicketFormModal`, cho phép chỉnh sửa task trực tiếp.
+- **Giai đoạn 3: Cải tiến Trải nghiệm Người dùng (UX/UI)**
+  - [ ] **Thêm Bộ chọn Chế độ xem:** Thêm các nút bấm (Day, Week, Month) để thay đổi `view_mode` của biểu đồ.
+  - [ ] **Bản địa hóa (Localization):** Cấu hình để biểu đồ hiển thị ngôn ngữ tiếng Việt.
+
 **Task: Tạo TimesheetDashboard.vue**
 - Mô tả: Timesheet dashboard page với reports
 - Files: `resources/js/views/TimesheetDashboard.vue`

@@ -55,6 +55,7 @@
 | **Scrum** | `BoardController` | `getScrumSprint()`, `getScrumTickets()` | ✅ Hoàn chỉnh |
 | **Board** | `BoardController` | `getProjects()` | ✅ Hoàn chỉnh |
 | **RoadMap** | `RoadMapController` | `getRoadmap()`, `getRoadmapDates()` | ✅ Hoàn chỉnh |
+| **Gantt Chart** | `RoadMapController` | `getGanttData()` | ✅ Hoàn chỉnh (cơ bản). Cần API để lưu thay đổi. |
 | **TimesheetDashboard** | `TimesheetDashboardController` | `monthlyReport()`, `weeklyReport()`, `activitiesReport()` | ✅ Hoàn chỉnh |
 
 ### Dashboard Widgets - Đã có

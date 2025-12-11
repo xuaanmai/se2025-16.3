@@ -37,6 +37,14 @@ const routes = [
         component: () => import('../views/ProjectDetail.vue'),
         props: true,
         meta: { title: 'Project Details' },
+        children: [
+          {
+            path: 'gantt',
+            name: 'projects.gantt',
+            component: () => import('../views/ProjectGantt.vue'),
+            meta: { title: 'Gantt Chart' },
+          }
+        ]
       },
       {
         path: 'tickets',

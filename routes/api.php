@@ -120,6 +120,7 @@ Route::middleware(['web', 'auth'])->group(function () {
     // RoadMap
     Route::get('/projects/{project}/roadmap', [RoadMapController::class, 'getRoadmap']);
     Route::get('/projects/{project}/roadmap/dates', [RoadMapController::class, 'getRoadmapDates']);
+    Route::get('/projects/{project}/gantt', [RoadMapController::class, 'getGanttData']);
 
     // Timesheet Dashboard
     Route::get('/timesheet/monthly-report', [TimesheetDashboardController::class, 'monthlyReport']);

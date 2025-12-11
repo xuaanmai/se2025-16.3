@@ -77,6 +77,32 @@ class RoadMapController extends Controller
             'scroll_to' => $firstDate ? Carbon::parse($firstDate)->subDays(5)->format('Y-m-d') : null,
         ]);
     }
+
+    /**
+     * Get Gantt chart data for project
+     */
+    public function getGanttData(Project $project)
+    {
+        // Check access
+        if ($project->owner_id != auth()->id() &&
+            !$project->users->where('id', auth()->id)->count()) {
+            return response()->json(['message' => 'Unauthorized'], 403);
+        }
+
+        $tasks = $project->tickets()->with('status')->get()->map(function ($ticket) {
+            $endDate = $ticket->due_date ? $ticket->due_date->toDateString() : Carbon::parse($ticket->created_at)->addDays(3)->toDateString();
+            return [
+                'id' => 'task_' . $ticket->id,
+                'name' => $ticket->name,
+                'start' => $ticket->created_at->toDateString(),
+                'end' => $endDate,
+                'progress' => $ticket->status->is_closed ? 100 : 0,
+                'dependencies' => '' // Basic implementation, no dependencies for now
+            ];
+        });
+
+        return response()->json($tasks);
+    }
 }
 
 

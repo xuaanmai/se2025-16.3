@@ -65,6 +65,7 @@ Thư mục chứa toàn bộ logic nghiệp vụ của ứng dụng.
 - `RoadMapController.php` - Cung cấp data cho RoadMap view
   - `getRoadmap()` - Epic data với tickets
   - `getRoadmapDates()` - Date range cho Gantt chart
+  - `getGanttData()` - Dữ liệu cho Gantt chart của project
 - `TimesheetDashboardController.php` - Cung cấp data cho Timesheet Dashboard
   - `monthlyReport()` - Báo cáo theo tháng
   - `weeklyReport()` - Báo cáo theo tuần
