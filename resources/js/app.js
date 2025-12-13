@@ -1,5 +1,6 @@
 import './bootstrap';
 import '../css/app.css';
+import '../css/vendor/frappe-gantt.css';
 
 import { createApp } from 'vue';
 import { createPinia } from 'pinia';

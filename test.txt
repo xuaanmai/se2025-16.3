@@ -1,0 +1,2 @@
+[plugin:vite:css] [postcss] D:/Study/Year4/ki1/CNPM/test03/project-management/resources/css/vendor/frappe-gantt.css:1:12414: Unclosed bracket
+D:/Study/Year4/ki1/CNPM/test03/project-management/resources/css/vendor/frappe-gantt.css:1:12414

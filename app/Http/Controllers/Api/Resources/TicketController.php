@@ -322,6 +322,29 @@ class TicketController extends Controller
             'Content-Type' => 'text/csv'
         ]);
     }
+
+    /**
+     * Update ticket dates from Gantt chart
+     */
+    public function updateDates(Request $request, Ticket $ticket)
+    {
+        // Authorize the action - uses TicketPolicy
+        if (!Gate::allows('update', $ticket)) {
+            return response()->json(['message' => 'You do not have permission to update this ticket.'], 403);
+        }
+
+        $validated = $request->validate([
+            'end' => 'required|date',
+        ]);
+
+        // Note: We are only updating the due_date (end).
+        // The start date in the Gantt is based on created_at, which should not be modified.
+        // For full start date edit capability, a dedicated 'starts_at' column would be needed.
+        $ticket->due_date = $validated['end'];
+        $ticket->save();
+
+        return response()->json($ticket);
+    }
 }
 
 

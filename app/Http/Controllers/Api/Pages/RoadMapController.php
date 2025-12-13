@@ -89,17 +89,41 @@ class RoadMapController extends Controller
             return response()->json(['message' => 'Unauthorized'], 403);
         }
 
-        $tasks = $project->tickets()->with('status')->get()->map(function ($ticket) {
-            $endDate = $ticket->due_date ? $ticket->due_date->toDateString() : Carbon::parse($ticket->created_at)->addDays(3)->toDateString();
-            return [
-                'id' => 'task_' . $ticket->id,
-                'name' => $ticket->name,
-                'start' => $ticket->created_at->toDateString(),
-                'end' => $endDate,
-                'progress' => $ticket->status->is_closed ? 100 : 0,
-                'dependencies' => '' // Basic implementation, no dependencies for now
-            ];
-        });
+        $tasks = $project->tickets()
+            ->with(['status', 'relations'])
+            ->get()
+            ->map(function ($ticket) {
+                $endDate = $ticket->due_date ? $ticket->due_date->toDateString() : Carbon::parse($ticket->created_at)->addDays(3)->toDateString();
+
+                // Get dependencies
+                $dependencies = $ticket->relations
+                    ->where('type', 'blocks')
+                    ->pluck('related_ticket_id')
+                    ->map(function ($id) {
+                        return 'task_' . $id;
+                    })
+                    ->implode(',');
+                
+                // Determine progress based on status
+                $progress = 0;
+                if ($ticket->status) {
+                    if ($ticket->status->is_closed) {
+                        $progress = 100;
+                    } elseif (str_contains(strtolower($ticket->status->name), 'progress')) {
+                        $progress = 50;
+                    }
+                }
+
+                return [
+                    'id' => 'task_' . $ticket->id,
+                    'name' => $ticket->name,
+                    'start' => $ticket->created_at->toDateString(),
+                    'end' => $endDate,
+                    'progress' => $progress,
+                    'dependencies' => $dependencies,
+                    'custom_class' => 'gantt-bar-' . str_replace(' ', '-', strtolower($ticket->status->name ?? 'default'))
+                ];
+            });
 
         return response()->json($tasks);
     }

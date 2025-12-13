@@ -833,35 +833,39 @@
 
 **Task: Nâng cấp và Chuyên nghiệp hóa Gantt Chart**
 - Mô tả: Nâng cấp tính năng Gantt Chart để tận dụng tối đa khả năng của thư viện, biến nó thành một công cụ quản lý chuyên nghiệp.
-- Trạng thái: **Kế hoạch**
+- Trạng thái: **Đang thực hiện**
 - **Giai đoạn 1: Hoàn thiện Dữ liệu và Hiển thị**
-  - [ ] **Hiển thị Phụ thuộc (Dependencies):** Cập nhật API để đọc `ticket_relations` và vẽ đường phụ thuộc giữa các công việc.
-  - [ ] **Màu sắc Động theo Trạng thái:** Thêm `custom_class` vào API để tô màu các thanh công việc theo trạng thái (To Do, In Progress, Done).
-  - [ ] **Tooltip Chi tiết:** Tùy chỉnh sự kiện `on_click` để hiển thị popup với thông tin chi tiết của công việc.
+  - [x] **Hiển thị Phụ thuộc (Dependencies):** Cập nhật API để đọc `ticket_relations` và vẽ đường phụ thuộc giữa các công việc.
+  - [x] **Màu sắc Động theo Trạng thái:** Thêm `custom_class` vào API để tô màu các thanh công việc theo trạng thái (To Do, In Progress, Done).
+  - [x] **Tooltip Chi tiết:** Tùy chỉnh sự kiện `on_click` để điều hướng đến trang chi tiết công việc.
 - **Giai đoạn 2: Tương tác hai chiều**
-  - [ ] **Lưu thay đổi Ngày (Kéo-thả):** Tạo API `PUT /api/tickets/{id}/dates` và xử lý sự kiện `on_date_change` để lưu ngày mới vào database.
+  - [x] **Lưu thay đổi Ngày (Kéo-thả):** Tạo API `PUT /api/tickets/{id}/dates` và xử lý sự kiện `on_date_change` để lưu ngày mới vào database.
   - [ ] **Mở Modal Chi tiết để Chỉnh sửa:** Nâng cấp sự kiện `on_click` để mở `TicketFormModal`, cho phép chỉnh sửa task trực tiếp.
 - **Giai đoạn 3: Cải tiến Trải nghiệm Người dùng (UX/UI)**
-  - [ ] **Thêm Bộ chọn Chế độ xem:** Thêm các nút bấm (Day, Week, Month) để thay đổi `view_mode` của biểu đồ.
+  - [x] **Thêm Bộ chọn Chế độ xem:** Thêm các nút bấm (Day, Week, Month) để thay đổi `view_mode` của biểu đồ.
   - [ ] **Bản địa hóa (Localization):** Cấu hình để biểu đồ hiển thị ngôn ngữ tiếng Việt.
 
 **Task: Tạo TimesheetDashboard.vue**
 - Mô tả: Timesheet dashboard page với reports
 - Files: `resources/js/views/TimesheetDashboard.vue`
 
-### 8.7. Styles
+---
 
-**Task: Cấu hình Tailwind CSS**
-- Mô tả: Setup Tailwind trong app.css
-- Files: `resources/css/app.css`
+## PHASE 15: BUG FIXES & IMPROVEMENTS
 
-**Task: Tạo Kanban Styles**
-- Mô tả: Custom styles cho Kanban board
-- Files: `resources/css/kanban.scss`
+**Task: Gỡ lỗi Gantt Chart không hiển thị**
+- Trạng thái: **Đang thực hiện**
+- Mô tả: Sau khi hoàn thiện các tính năng, Gantt chart không hiển thị ("No tasks to display") hoặc không tải được component.
+- Các bước đã thực hiện:
+  - [x] Sửa lỗi build của Vite do import CSS không đúng cách.
+  - [x] Xác định file component "ma" gây lỗi và sửa nó.
+  - [x] Tạm thời đưa `ProjectGantt.vue` về trạng thái tối giản để gỡ lỗi.
+- Bước tiếp theo: Khôi phục lại chức năng cho `ProjectGantt.vue` và giải quyết vấn đề "No tasks".
 
-**Task: Tạo Dialog Styles**
-- Mô tả: Custom styles cho modals/dialogs
-- Files: `resources/css/dialogs.scss`
+**Task: Fix Dashboard Crash**
+- Mô tả: Sửa lỗi crash Dashboard do thiếu cột `is_closed` trong `ticket_statuses`
+- Files: `database/migrations/add_is_closed_to_ticket_statuses_table.php`
+- Trạng thái: **Hoàn thành**
 
 ---
 

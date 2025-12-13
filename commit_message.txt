@@ -1,9 +1,0 @@
-feat: Hoàn thiện UX và sửa lỗi Seeder/Kanban
-
-- Thêm DemoDataSeeder để tạo dữ liệu mẫu phong phú, giải quyết các lỗi liên quan đến Role, Factory và tên cột.
-- Sửa lỗi 422 trên Kanban Board bằng cách lọc và chỉ hiển thị các dự án loại 'kanban'.
-- Sửa lỗi giao diện TaskCard khi ticket chưa được gán người thực hiện.
-- Thêm component ConfirmationModal có thể tái sử dụng và áp dụng cho tất cả các hành động Xóa (Project, User, Ticket).
-- Tái cấu trúc Dashboard để hiển thị biểu đồ 'Tickets by Priority'.
-- Sửa lỗi logic phân quyền và di chuyển nút 'Create Ticket' vào trang chi tiết dự án.
-- Cập nhật các tài liệu liên quan: changes.md, PROJECT_STRUCTURE.md, README.md.

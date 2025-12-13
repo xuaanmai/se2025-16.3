@@ -65,7 +65,7 @@ Thư mục chứa toàn bộ logic nghiệp vụ của ứng dụng.
 - `RoadMapController.php` - Cung cấp data cho RoadMap view
   - `getRoadmap()` - Epic data với tickets
   - `getRoadmapDates()` - Date range cho Gantt chart
-  - `getGanttData()` - Dữ liệu cho Gantt chart của project
+  - `getGanttData()` - **Quan trọng**: Dữ liệu cho Gantt chart của project, bao gồm dependencies và custom classes để tô màu.
 - `TimesheetDashboardController.php` - Cung cấp data cho Timesheet Dashboard
   - `monthlyReport()` - Báo cáo theo tháng
   - `weeklyReport()` - Báo cáo theo tuần
@@ -336,6 +336,38 @@ Thư mục chứa toàn bộ logic nghiệp vụ của ứng dụng.
 ...
 ...
 - `resources/tickets/view.blade.php` - Ticket view template
+
+---
+
+### 📁 `/resources/js` - Frontend Core (Vue.js SPA)
+
+Thư mục chứa toàn bộ mã nguồn cho Single Page Application (SPA) viết bằng Vue.js.
+
+##### `/resources/js/views` - Page Components
+**Vai trò**: Mỗi file là một trang hoàn chỉnh của ứng dụng.
+- `Dashboard.vue`: Trang dashboard chính.
+- `Projects.vue`: Trang danh sách dự án.
+- `ProjectDetail.vue`: Trang chi tiết một dự án, chứa các tab con.
+- `ProjectGantt.vue`: **Quan trọng**: Component hiển thị Gantt chart cho một dự án cụ thể, được sử dụng trong `ProjectDetail.vue`. Nó gọi API, xử lý dữ liệu và hiển thị biểu đồ với màu sắc và đường phụ thuộc.
+- `Tickets.vue`: Trang danh sách tickets.
+- `TicketDetail.vue`: Trang chi tiết một ticket.
+- `Roadmap.vue`: Trang roadmap chung (hiện tại chỉ là wrapper, chưa có chức năng).
+
+##### `/resources/js/components` - Reusable Components
+**Vai trò**: Các component có thể tái sử dụng trên nhiều trang.
+- `Layout.vue`: **Quan trọng**: Bố cục chung của ứng dụng (sidebar, header, content).
+- `DataTable.vue`: Bảng dữ liệu có phân trang, sắp xếp.
+- `Modal.vue`: Component modal chung.
+- `Roadmap/GanttChart.vue`: Component Gantt chart cơ bản (hiện không được dùng trực tiếp, logic đã được chuyển vào `ProjectGantt.vue`).
+
+##### `/resources/js/services` - API Services
+- `api.js`: Cấu hình Axios instance để giao tiếp với backend API.
+
+##### `/resources/js/stores` - State Management (Pinia)
+- `index.js`: Quản lý state của ứng dụng (thông tin user, projects, tickets...).
+
+##### `/resources/js/router` - Router
+- `index.js`: Định nghĩa các routes cho SPA.
 
 ---
 

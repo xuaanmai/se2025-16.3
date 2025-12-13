@@ -81,8 +81,8 @@ Sprint Progress: Phần trăm hoàn thành
 Epic Management: Quản lý các Epic (nhóm tính năng lớn, thường kéo dài nhiều Sprint)
 Timeline View: Hiển thị lộ trình phát triển sản phẩm theo thời gian dưới dạng biểu đồ Gantt chuyên nghiệp:
 - **Trực quan hóa Phụ thuộc:** Tự động hiển thị các đường nối thể hiện mối quan hệ "chặn" (blocks) giữa các công việc.
-- **Tương tác hai chiều:** Cho phép người dùng kéo-thả để thay đổi ngày bắt đầu/kết thúc của công việc và lưu trực tiếp vào hệ thống.
-- **Màu sắc thông minh:** Tự động tô màu các công việc dựa trên trạng thái (ví dụ: Xanh cho "Done", Vàng cho "In Progress") để dễ dàng nhận biết.
+- **Màu sắc thông minh:** Tự động tô màu các công việc dựa trên trạng thái (ví dụ: Xanh lá cho "Done", Xanh dương cho "In Progress") để dễ dàng nhận biết tiến độ.
+- **Tương tác hai chiều (kế hoạch):** Cho phép người dùng kéo-thả để thay đổi ngày bắt đầu/kết thúc của công việc và lưu trực tiếp vào hệ thống.
 - **Bộ lọc linh hoạt:** Cung cấp các bộ lọc theo người thực hiện, loại công việc, và các chế độ xem theo Ngày/Tuần/Tháng.
 Release Planning: Lên kế hoạch các phiên bản phát hành (Release/Version) 4. Module Quản lý Thời gian (Time Tracking)
 4.1 Ghi nhận Giờ công

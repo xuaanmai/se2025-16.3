@@ -1,5 +1,31 @@
 # Change Log
 
+## Gỡ lỗi & Tạm dừng (13/12/2025)
+- **Tình trạng:** Tạm dừng phiên làm việc để lưu lại trạng thái.
+- **Sự cố:** Sau khi hoàn thành các tính năng cho Gantt Chart, ứng dụng gặp lỗi không tải được component `ProjectGantt.vue`. Nguyên nhân được xác định là do một file component cũ, không được sử dụng (`components/Roadmap/GanttChart.vue`) chứa một câu lệnh `import` CSS bị lỗi, làm sập trình build của Vite.
+- **Gỡ lỗi:**
+  - Đã sửa lỗi import CSS của thư viện `frappe-gantt` bằng cách sao chép file CSS vào cục bộ và import trong `app.js`.
+  - Đã xác định và sửa lỗi trong file component "ma" (`components/Roadmap/GanttChart.vue`).
+  - Phát hiện lỗi logic mới: Gantt chart hiển thị "No tasks to display". Nguyên nhân là do một bộ lọc quá chặt trong `RoadMapController`.
+- **Trạng thái hiện tại:**
+  - Đã xóa bộ lọc trong `RoadMapController` để hiển thị lại tất cả các task.
+  - File `ProjectGantt.vue` đang ở trạng thái **tối giản** để phục vụ việc gỡ lỗi và chưa có đầy đủ chức năng.
+  - Cần tiếp tục gỡ lỗi vấn đề "No tasks" hoặc "tải chậm" trong phiên làm việc tiếp theo.
+
+## Hoàn thiện Gantt Chart (13/12/2025)
+- **Nâng cấp API và Giao diện Gantt Chart (Giai đoạn 1):**
+  - **Backend:** Cập nhật API endpoint `GET /api/projects/{project}/gantt` (`RoadMapController@getGanttData`) để cung cấp dữ liệu về **dependencies** (quan hệ `blocks`) và **custom_class** (dựa trên trạng thái ticket) cho việc tô màu.
+  - **Frontend:** Nâng cấp component `ProjectGantt.vue` để trở thành một biểu đồ Gantt hoàn chỉnh.
+    - Tích hợp `frappe-gantt` và import CSS cần thiết.
+    - Thêm các style CSS để tô màu thanh công việc theo trạng thái (`.gantt-bar-to-do`, `.gantt-bar-in-progress`, `.gantt-bar-done`...).
+    - Biểu đồ giờ đây đã hiển thị được các đường phụ thuộc giữa các công việc.
+    - Thêm tính năng điều hướng: click vào một công việc sẽ chuyển đến trang chi tiết của công việc đó.
+- **Tương tác hai chiều (Giai đoạn 2):**
+  - **Backend:** Tạo API endpoint `PUT /api/tickets/{ticket}/dates` và phương thức `TicketController@updateDates` để cho phép cập nhật `due_date` của ticket.
+  - **Frontend:** Kích hoạt sự kiện `on_date_change` trong `ProjectGantt.vue`. Khi người dùng kéo-thả để thay đổi ngày kết thúc của công việc, thay đổi sẽ được tự động lưu vào database.
+- **Cải tiến UX/UI (Giai đoạn 3):**
+  - **Frontend:** Thêm "Bộ chọn Chế độ xem" (View Mode Switcher) vào `ProjectGantt.vue`, cho phép người dùng dễ dàng chuyển đổi giữa các chế độ xem Ngày, Tuần, và Tháng.
+
 ## Triển khai Gantt Chart (11/12/2025)
 - **Thêm tính năng Gantt Chart cho Project:**
   - Cài đặt thư viện `frappe-gantt` để hiển thị biểu đồ Gantt.
