@@ -128,6 +128,3 @@ class RoadMapController extends Controller
         return response()->json($tasks);
     }
 }
-
-
-
