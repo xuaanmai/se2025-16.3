@@ -168,6 +168,19 @@ export const useTicketsStore = defineStore('tickets', {
       } finally {
         this.loading = false
       }
-    }
+    },
+
+    async fetchTicketsInProgress() {
+      this.loading = true
+      try {
+        const res = await api.get('/tickets/in-progress')
+        this.tickets = res.data.data
+      } catch (e) {
+        console.error(e)
+        this.error = 'Failed to fetch tickets in progress'
+      } finally {
+        this.loading = false
+      }
+    },
   },
 });
