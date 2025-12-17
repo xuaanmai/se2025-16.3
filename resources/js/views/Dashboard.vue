@@ -11,7 +11,7 @@
       <!-- Stat Cards -->
       <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
         <StatCard title="Active Projects" :value="dashboardStore.stats?.active_projects" icon="collection" to="/projects/active"/>
-        <StatCard title="Open Tickets" :value="dashboardStore.stats?.open_tickets" icon="ticket" />
+        <StatCard title="Open Tickets" :value="dashboardStore.stats?.open_tickets" icon="ticket" to="/tickets/open"/>
         <StatCard title="Tickets In Progress" :value="dashboardStore.stats?.in_progress_tickets" icon="fire" />
         <StatCard title="Total Users" :value="dashboardStore.stats?.total_users" icon="users" />
       </div>
@@ -47,6 +47,7 @@ import StatCard from '../components/Dashboard/StatCard.vue';
 import StatusPieChart from '../components/Dashboard/StatusPieChart.vue';
 import WorkloadList from '../components/Dashboard/WorkloadList.vue';
 import ActivityTimeline from '../components/Dashboard/ActivityTimeline.vue';
+import OpenTickets from '@/views/OpenTickets.vue'
 
 const dashboardStore = useDashboardStore();
 import MyTasksToday from '../components/Dashboard/MyTasksToday.vue';
