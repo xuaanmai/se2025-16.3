@@ -12,7 +12,7 @@
       <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
         <StatCard title="Active Projects" :value="dashboardStore.stats?.active_projects" icon="collection" to="/projects/active"/>
         <StatCard title="Open Tickets" :value="dashboardStore.stats?.open_tickets" icon="ticket" to="/tickets/open"/>
-        <StatCard title="Tickets In Progress" :value="dashboardStore.stats?.in_progress_tickets" icon="fire" />
+        <StatCard title="Tickets In Progress" :value="dashboardStore.stats?.in_progress_tickets" icon="fire" to="/tickets/in-progress"/>
         <StatCard title="Total Users" :value="dashboardStore.stats?.total_users" icon="users" />
       </div>
 
