@@ -22,7 +22,13 @@ class Ticket extends Model implements HasMedia
     protected $fillable = [
         'name', 'content', 'owner_id', 'responsible_id',
         'status_id', 'project_id', 'code', 'order', 'type_id',
-        'priority_id', 'estimation', 'epic_id', 'sprint_id'
+        'priority_id', 'estimation', 'epic_id', 'sprint_id',
+        'start_date', 'due_date'
+    ];
+
+    protected $casts = [
+        'start_date' => 'date',
+        'due_date' => 'date',
     ];
 
     public static function boot()
