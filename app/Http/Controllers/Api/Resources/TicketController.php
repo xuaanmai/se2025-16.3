@@ -219,6 +219,25 @@ class TicketController extends Controller
             'data' => $tickets
         ]);
     }
+
+    public function inProgress(Request $request)
+    {
+        $user = $request->user();
+
+        $tickets = Ticket::with([
+                'project:id,name',
+                'status:id,name,color',
+                'priority:id,name,color'
+            ])
+            ->where('responsible_id', $user->id)  
+            ->where('status_id', 2)              
+            ->orderByDesc('created_at')
+            ->get();
+
+        return response()->json([
+            'data' => $tickets
+        ]);
+    }
 }
 
 
