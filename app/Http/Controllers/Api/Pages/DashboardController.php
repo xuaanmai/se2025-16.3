@@ -10,7 +10,7 @@ use App\Models\TicketComment;
 use App\Models\TicketPriority;
 use App\Models\TicketType;
 use App\Models\User;
-use Carbon\Carbon;
+use Illuminate\Support\Facades\DB;
 
 class DashboardController extends Controller
 {
@@ -19,7 +19,7 @@ class DashboardController extends Controller
         $stats = [
             'projects' => Project::count(),
             'tickets' => Ticket::count(),
-            'active_tickets' => Ticket::whereHas('status', function ($q) {
+            'active_tickets' => Ticket::whereHas('status', function($q) {
                 $q->where('is_closed', false);
             })->count(),
             'users' => User::count(),
@@ -41,22 +41,22 @@ class DashboardController extends Controller
      */
     public function favoriteProjects()
     {
+        /** @var \App\Models\User $user */
         $user = auth()->user();
-
+        
         if (!$user) {
             return response()->json([]);
         }
 
         $favoriteProjects = $user->favoriteProjects()
             ->with(['owner', 'status'])
-            ->withCount('tickets')
             ->get()
             ->map(function ($project) {
                 return [
                     'id' => $project->id,
                     'name' => $project->name,
                     'cover' => $project->cover,
-                    'tickets_count' => $project->tickets_count,
+                    'tickets_count' => $project->tickets()->count(),
                     'contributors_count' => $project->contributors->count(),
                     'owner' => $project->owner,
                     'status' => $project->status,
@@ -71,35 +71,21 @@ class DashboardController extends Controller
      */
     public function latestActivities()
     {
-        $userId = auth()->id();
-
-        $projectIds = Project::where('owner_id', $userId)
-            ->orWhereHas('users', function ($q) use ($userId) {
-                $q->where('users.id', $userId);
+        $activities = TicketActivity::with(['ticket.project', 'ticket.status', 'user', 'oldStatus', 'newStatus'])
+            ->whereHas('ticket', function ($query) {
+                $query->where('owner_id', auth()->id())
+                    ->orWhere('responsible_id', auth()->id())
+                    ->orWhereHas('project', function ($query) {
+                        $query->where('owner_id', auth()->id())
+                            ->orWhereHas('users', function ($query) {
+                                $query->where('users.id', auth()->id());
+                            });
+                    });
             })
-            ->pluck('id');
-
-        $ticketIds = Ticket::whereIn('project_id', $projectIds)
-            ->orWhere('owner_id', $userId)
-            ->orWhere('responsible_id', $userId)
-            ->pluck('id');
-
-        $activities = TicketActivity::with([
-                'ticket.project',
-                'ticket.status',
-                'user',
-                'oldStatus',
-                'newStatus'
-            ])
-            ->whereIn('ticket_id', $ticketIds)
             ->latest()
             ->limit(5)
             ->get()
             ->map(function ($activity) {
-                if (!$activity->ticket || !$activity->ticket->project || !$activity->user) {
-                    return null;
-                }
-
                 return [
                     'id' => $activity->id,
                     'ticket' => [
@@ -111,21 +97,16 @@ class DashboardController extends Controller
                             'name' => $activity->ticket->project->name,
                         ],
                     ],
-                    'old_status' => $activity->oldStatus ? [
+                    'old_status' => [
                         'id' => $activity->oldStatus->id,
                         'name' => $activity->oldStatus->name,
                         'color' => $activity->oldStatus->color,
-                    ] : null,
-                    'new_status' => $activity->newStatus ? [
+                    ],
+                    'new_status' => [
                         'id' => $activity->newStatus->id,
                         'name' => $activity->newStatus->name,
                         'color' => $activity->newStatus->color,
-                    ] : null,
-                    'description' => sprintf(
-                        '<strong>%s</strong> moved ticket <strong>%s</strong>',
-                        e($activity->user->name),
-                        e($activity->ticket->code),
-                    ),
+                    ],
                     'user' => [
                         'id' => $activity->user->id,
                         'name' => $activity->user->name,
@@ -133,9 +114,7 @@ class DashboardController extends Controller
                     ],
                     'created_at' => $activity->created_at,
                 ];
-            })
-            ->filter()
-            ->values();
+            });
 
         return response()->json($activities);
     }
@@ -145,21 +124,17 @@ class DashboardController extends Controller
      */
     public function latestComments()
     {
-        $userId = auth()->id();
-
-        $projectIds = Project::where('owner_id', $userId)
-            ->orWhereHas('users', function ($q) use ($userId) {
-                $q->where('users.id', $userId);
-            })
-            ->pluck('id');
-
-        $ticketIds = Ticket::whereIn('project_id', $projectIds)
-            ->orWhere('owner_id', $userId)
-            ->orWhere('responsible_id', $userId)
-            ->pluck('id');
-
         $comments = TicketComment::with(['ticket.project', 'user'])
-            ->whereIn('ticket_id', $ticketIds)
+            ->whereHas('ticket', function ($query) {
+                $query->where('owner_id', auth()->id())
+                    ->orWhere('responsible_id', auth()->id())
+                    ->orWhereHas('project', function ($query) {
+                        $query->where('owner_id', auth()->id())
+                            ->orWhereHas('users', function ($query) {
+                                $query->where('users.id', auth()->id());
+                            });
+                    });
+            })
             ->latest()
             ->limit(5)
             ->get()
@@ -193,16 +168,13 @@ class DashboardController extends Controller
      */
     public function latestProjects()
     {
-        $userId = auth()->id();
-
-        $projectIds = Project::where('owner_id', $userId)
-            ->orWhereHas('users', function ($q) use ($userId) {
-                $q->where('users.id', $userId);
-            })
-            ->pluck('id');
-
         $projects = Project::with(['owner', 'status'])
-            ->whereIn('id', $projectIds)
+            ->where(function ($query) {
+                $query->where('owner_id', auth()->id())
+                    ->orWhereHas('users', function ($query) {
+                        $query->where('users.id', auth()->id());
+                    });
+            })
             ->latest()
             ->limit(5)
             ->get()
@@ -232,21 +204,17 @@ class DashboardController extends Controller
      */
     public function latestTickets()
     {
-        $userId = auth()->id();
-
-        $projectIds = Project::where('owner_id', $userId)
-            ->orWhereHas('users', function ($q) use ($userId) {
-                $q->where('users.id', $userId);
-            })
-            ->pluck('id');
-
-        $ticketIds = Ticket::whereIn('project_id', $projectIds)
-            ->orWhere('owner_id', $userId)
-            ->orWhere('responsible_id', $userId)
-            ->pluck('id');
-
         $tickets = Ticket::with(['project', 'status', 'type', 'priority', 'responsible'])
-            ->whereIn('id', $ticketIds)
+            ->where(function ($query) {
+                $query->where('owner_id', auth()->id())
+                    ->orWhere('responsible_id', auth()->id())
+                    ->orWhereHas('project', function ($query) {
+                        $query->where('owner_id', auth()->id())
+                            ->orWhereHas('users', function ($query) {
+                                $query->where('users.id', auth()->id());
+                            });
+                    });
+            })
             ->latest()
             ->limit(5)
             ->get()
@@ -290,7 +258,7 @@ class DashboardController extends Controller
     public function ticketsByPriority()
     {
         $data = TicketPriority::withCount('tickets')->get();
-
+        
         return response()->json([
             'datasets' => [
                 [
@@ -319,7 +287,7 @@ class DashboardController extends Controller
     public function ticketsByType()
     {
         $data = TicketType::withCount('tickets')->get();
-
+        
         return response()->json([
             'datasets' => [
                 [
@@ -347,12 +315,8 @@ class DashboardController extends Controller
      */
     public function ticketTimeLogged()
     {
-        $tickets = Ticket::select('tickets.id', 'tickets.code')
-            ->selectRaw('COALESCE(SUM(ticket_hours.value), 0) as total_hours')
-            ->leftJoin('ticket_hours', 'tickets.id', '=', 'ticket_hours.ticket_id')
-            ->groupBy('tickets.id', 'tickets.code')
-            ->havingRaw('SUM(ticket_hours.value) > 0')
-            ->orderByDesc('total_hours')
+        $tickets = Ticket::with('hours')
+            ->has('hours')
             ->limit(10)
             ->get();
 
@@ -360,9 +324,15 @@ class DashboardController extends Controller
             'datasets' => [
                 [
                     'label' => __('Total time logged (hours)'),
-                    'data' => $tickets->pluck('total_hours')->toArray(),
-                    'backgroundColor' => ['rgba(54, 162, 235, .6)'],
-                    'borderColor' => ['rgba(54, 162, 235, .8)'],
+                    'data' => $tickets->map(function ($ticket) {
+                        return $ticket->totalLoggedInHours ?? 0;
+                    })->toArray(),
+                    'backgroundColor' => [
+                        'rgba(54, 162, 235, .6)'
+                    ],
+                    'borderColor' => [
+                        'rgba(54, 162, 235, .8)'
+                    ],
                 ],
             ],
             'labels' => $tickets->pluck('code')->toArray(),
@@ -374,12 +344,15 @@ class DashboardController extends Controller
      */
     public function userTimeLogged()
     {
-        $users = User::select('users.id', 'users.name')
-            ->selectRaw('COALESCE(SUM(ticket_hours.value), 0) as total_hours')
-            ->leftJoin('ticket_hours', 'users.id', '=', 'ticket_hours.user_id')
+        $users = User::query()
+            ->select(
+                'users.id',
+                'users.name',
+                DB::raw('SUM(ticket_hours.value) as total_hours')
+            )
+            ->join('ticket_hours', 'ticket_hours.user_id', '=', 'users.id')
             ->groupBy('users.id', 'users.name')
-            ->havingRaw('SUM(ticket_hours.value) > 0')
-            ->orderByDesc('total_hours')
+            ->orderByDesc('total_hours') 
             ->limit(10)
             ->get();
 
@@ -388,8 +361,8 @@ class DashboardController extends Controller
                 [
                     'label' => __('Total time logged (hours)'),
                     'data' => $users->pluck('total_hours')->toArray(),
-                    'backgroundColor' => ['rgba(54, 162, 235, .6)'],
-                    'borderColor' => ['rgba(54, 162, 235, .8)'],
+                    'backgroundColor' => 'rgba(54, 162, 235, .6)',
+                    'borderColor' => 'rgba(54, 162, 235, .8)',
                 ],
             ],
             'labels' => $users->pluck('name')->toArray(),
@@ -427,3 +400,6 @@ class DashboardController extends Controller
         return response()->json($tasks);
     }
 }
+
+
+
