@@ -4,18 +4,25 @@ namespace App\Http\Controllers\Api\Resources;
 
 use App\Exports\TicketHoursExport;
 use App\Http\Controllers\Controller;
+<<<<<<< HEAD
 use App\Models\Project;
+=======
+>>>>>>> origin/dashboard
 use App\Models\Ticket;
 use App\Models\TicketHour;
 use App\Models\User;
 use Illuminate\Http\Request;
+<<<<<<< HEAD
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Gate;
+=======
+>>>>>>> origin/dashboard
 use Illuminate\Support\Str;
 use Maatwebsite\Excel\Facades\Excel;
 
 class TicketController extends Controller
 {
+<<<<<<< HEAD
     /**
      * Kiểm tra xem user hiện tại có phải admin không
      * Admin = có role "Admin"
@@ -73,6 +80,15 @@ class TicketController extends Controller
             }
             
             $query->where('project_id', $projectId);
+=======
+    public function index(Request $request)
+    {
+        $query = Ticket::with(['owner', 'responsible', 'status', 'project', 'type', 'priority']);
+
+        // Filter by project
+        if ($request->has('project_id')) {
+            $query->where('project_id', $request->project_id);
+>>>>>>> origin/dashboard
         }
 
         // Filter by status
@@ -102,6 +118,7 @@ class TicketController extends Controller
 
     public function show(Ticket $ticket)
     {
+<<<<<<< HEAD
         // Kiểm tra quyền truy cập nếu không phải admin
         if (!$this->isAdmin()) {
             $userId = auth()->id();
@@ -117,6 +134,8 @@ class TicketController extends Controller
             }
         }
 
+=======
+>>>>>>> origin/dashboard
         $ticket->load([
             'owner', 'responsible', 'status', 'project', 
             'type', 'priority', 'comments', 'activities', 
@@ -127,11 +146,17 @@ class TicketController extends Controller
 
     public function store(Request $request)
     {
+<<<<<<< HEAD
         $userId = auth()->id();
         
         $validated = $request->validate([
             'name' => 'required|string|max:255',
             'content' => 'required|string',
+=======
+        $validated = $request->validate([
+            'name' => 'required|string|max:255',
+            'content' => 'nullable|string',
+>>>>>>> origin/dashboard
             'project_id' => 'required|exists:projects,id',
             'owner_id' => 'required|exists:users,id',
             'responsible_id' => 'nullable|exists:users,id',
@@ -143,6 +168,7 @@ class TicketController extends Controller
             'sprint_id' => 'nullable|exists:sprints,id',
         ]);
 
+<<<<<<< HEAD
         // Kiểm tra quyền truy cập project nếu không phải admin
         if (!$this->isAdmin()) {
             $projectId = $validated['project_id'];
@@ -165,6 +191,8 @@ class TicketController extends Controller
         // Đảm bảo content luôn là empty string nếu null (vì Laravel middleware ConvertEmptyStringsToNull)
         $validated['content'] = $validated['content'] ?? '';
 
+=======
+>>>>>>> origin/dashboard
         $ticket = Ticket::create($validated);
         $ticket->load(['owner', 'responsible', 'status', 'project', 'type', 'priority']);
 
@@ -173,6 +201,7 @@ class TicketController extends Controller
 
     public function update(Request $request, Ticket $ticket)
     {
+<<<<<<< HEAD
         // Kiểm tra quyền chỉnh sửa nếu không phải admin
         if (!$this->isAdmin()) {
             $userId = auth()->id();
@@ -191,6 +220,11 @@ class TicketController extends Controller
         $validated = $request->validate([
             'name' => 'sometimes|required|string|max:255',
             'content' => 'sometimes|required|string',
+=======
+        $validated = $request->validate([
+            'name' => 'sometimes|required|string|max:255',
+            'content' => 'nullable|string',
+>>>>>>> origin/dashboard
             'project_id' => 'sometimes|required|exists:projects,id',
             'owner_id' => 'sometimes|required|exists:users,id',
             'responsible_id' => 'nullable|exists:users,id',
@@ -203,11 +237,14 @@ class TicketController extends Controller
             'order' => 'nullable|integer',
         ]);
 
+<<<<<<< HEAD
         // Đảm bảo content luôn là empty string nếu null (khi content được gửi trong request)
         if (isset($validated['content']) && $validated['content'] === null) {
             $validated['content'] = '';
         }
 
+=======
+>>>>>>> origin/dashboard
         $ticket->update($validated);
         $ticket->load(['owner', 'responsible', 'status', 'project', 'type', 'priority']);
 
@@ -216,6 +253,7 @@ class TicketController extends Controller
 
     public function destroy(Ticket $ticket)
     {
+<<<<<<< HEAD
         // Kiểm tra quyền xóa - chỉ owner hoặc admin mới được xóa
         if (!$this->isAdmin()) {
             $userId = auth()->id();
@@ -226,6 +264,8 @@ class TicketController extends Controller
             }
         }
 
+=======
+>>>>>>> origin/dashboard
         $ticket->delete();
         return response()->json(['message' => 'Ticket deleted successfully']);
     }
@@ -323,6 +363,7 @@ class TicketController extends Controller
         ]);
     }
 
+<<<<<<< HEAD
     /**
      * Update ticket dates from Gantt chart
      */
@@ -344,6 +385,44 @@ class TicketController extends Controller
         $ticket->save();
 
         return response()->json($ticket);
+=======
+    public function open(Request $request)
+    {
+        $user = $request->user();
+
+        $tickets = Ticket::with([
+                'project:id,name',
+                'status:id,name,color',
+                'priority:id,name,color'
+            ])
+            ->where('responsible_id', $user->id)  
+            ->where('status_id', 1)              
+            ->orderByDesc('created_at')
+            ->get();
+
+        return response()->json([
+            'data' => $tickets
+        ]);
+    }
+
+    public function inProgress(Request $request)
+    {
+        $user = $request->user();
+
+        $tickets = Ticket::with([
+                'project:id,name',
+                'status:id,name,color',
+                'priority:id,name,color'
+            ])
+            ->where('responsible_id', $user->id)  
+            ->where('status_id', 2)              
+            ->orderByDesc('created_at')
+            ->get();
+
+        return response()->json([
+            'data' => $tickets
+        ]);
+>>>>>>> origin/dashboard
     }
 }
 
