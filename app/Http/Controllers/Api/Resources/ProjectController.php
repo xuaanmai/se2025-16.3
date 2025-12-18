@@ -442,29 +442,6 @@ class ProjectController extends Controller
 
         return response()->json($statuses);
     }
-
-    // GET /api/projects/active
-    public function active(Request $request)
-    {
-        $user = auth()->user();
-
-        if (!$user) {
-            abort(401);
-        }
-
-        $query = Project::with(['owner', 'status'])
-            ->withCount('tickets')
-            ->whereHas('status', fn ($q) => $q->where('name', 'Active'));
-
-        if (!$user->hasRole('admin')) {
-            $query->where(function ($q) use ($user) {
-                $q->where('owner_id', $user->id)
-                ->orWhereHas('users', fn ($u) => $u->whereKey($user->id));
-            });
-        }
-
-        return $query->paginate(12);
-    }
 }
 
 
