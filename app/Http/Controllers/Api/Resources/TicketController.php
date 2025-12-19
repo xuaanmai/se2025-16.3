@@ -4,83 +4,15 @@ namespace App\Http\Controllers\Api\Resources;
 
 use App\Exports\TicketHoursExport;
 use App\Http\Controllers\Controller;
-<<<<<<< HEAD
-use App\Models\Project;
-=======
->>>>>>> origin/dashboard
 use App\Models\Ticket;
 use App\Models\TicketHour;
 use App\Models\User;
 use Illuminate\Http\Request;
-<<<<<<< HEAD
-use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Gate;
-=======
->>>>>>> origin/dashboard
 use Illuminate\Support\Str;
 use Maatwebsite\Excel\Facades\Excel;
 
 class TicketController extends Controller
 {
-<<<<<<< HEAD
-    /**
-     * Kiểm tra xem user hiện tại có phải admin không
-     * Admin = có role "Admin"
-     */
-    protected function isAdmin(): bool
-    {
-        /** @var User|null $user */
-        $user = Auth::user();
-        if (!$user) {
-            return false;
-        }
-        
-        return $user->hasRole('Admin');
-    }
-
-    public function index(Request $request)
-    {
-        $userId = auth()->id();
-        $query = Ticket::with(['owner', 'responsible', 'status', 'project', 'type', 'priority']);
-
-        // Nếu không phải admin, chỉ lấy tickets mà user có quyền truy cập
-        if (!$this->isAdmin()) {
-            $query->where(function ($query) use ($userId) {
-                $query->where('owner_id', $userId)
-                    ->orWhere('responsible_id', $userId)
-                    ->orWhereHas('project', function ($query) use ($userId) {
-                        $query->where('owner_id', $userId)
-                            ->orWhereHas('users', function ($query) use ($userId) {
-                                $query->where('users.id', $userId);
-                            });
-                    });
-            });
-        }
-
-        // Filter by project
-        if ($request->has('project_id')) {
-            $projectId = $request->project_id;
-            
-            // Kiểm tra quyền truy cập project nếu không phải admin
-            if (!$this->isAdmin()) {
-                $hasAccess = Project::where('id', $projectId)
-                    ->where(function ($q) use ($userId) {
-                        $q->where('owner_id', $userId)
-                            ->orWhereHas('users', function ($q) use ($userId) {
-                                $q->where('users.id', $userId);
-                            });
-                    })
-                    ->exists();
-                
-                if (!$hasAccess) {
-                    return response()->json([
-                        'message' => 'You do not have permission to access this project.'
-                    ], 403);
-                }
-            }
-            
-            $query->where('project_id', $projectId);
-=======
     public function index(Request $request)
     {
         $query = Ticket::with(['owner', 'responsible', 'status', 'project', 'type', 'priority']);
@@ -88,7 +20,6 @@ class TicketController extends Controller
         // Filter by project
         if ($request->has('project_id')) {
             $query->where('project_id', $request->project_id);
->>>>>>> origin/dashboard
         }
 
         // Filter by status
@@ -118,24 +49,6 @@ class TicketController extends Controller
 
     public function show(Ticket $ticket)
     {
-<<<<<<< HEAD
-        // Kiểm tra quyền truy cập nếu không phải admin
-        if (!$this->isAdmin()) {
-            $userId = auth()->id();
-            $hasAccess = $ticket->owner_id === $userId
-                || $ticket->responsible_id === $userId
-                || $ticket->project->owner_id === $userId
-                || $ticket->project->users()->where('users.id', $userId)->exists();
-            
-            if (!$hasAccess) {
-                return response()->json([
-                    'message' => 'You do not have permission to view this ticket.'
-                ], 403);
-            }
-        }
-
-=======
->>>>>>> origin/dashboard
         $ticket->load([
             'owner', 'responsible', 'status', 'project', 
             'type', 'priority', 'comments', 'activities', 
@@ -146,17 +59,9 @@ class TicketController extends Controller
 
     public function store(Request $request)
     {
-<<<<<<< HEAD
-        $userId = auth()->id();
-        
-        $validated = $request->validate([
-            'name' => 'required|string|max:255',
-            'content' => 'required|string',
-=======
         $validated = $request->validate([
             'name' => 'required|string|max:255',
             'content' => 'nullable|string',
->>>>>>> origin/dashboard
             'project_id' => 'required|exists:projects,id',
             'owner_id' => 'required|exists:users,id',
             'responsible_id' => 'nullable|exists:users,id',
@@ -168,31 +73,6 @@ class TicketController extends Controller
             'sprint_id' => 'nullable|exists:sprints,id',
         ]);
 
-<<<<<<< HEAD
-        // Kiểm tra quyền truy cập project nếu không phải admin
-        if (!$this->isAdmin()) {
-            $projectId = $validated['project_id'];
-            $hasAccess = Project::where('id', $projectId)
-                ->where(function ($q) use ($userId) {
-                    $q->where('owner_id', $userId)
-                        ->orWhereHas('users', function ($q) use ($userId) {
-                            $q->where('users.id', $userId);
-                        });
-                })
-                ->exists();
-            
-            if (!$hasAccess) {
-                return response()->json([
-                    'message' => 'You do not have permission to create tickets in this project.'
-                ], 403);
-            }
-        }
-
-        // Đảm bảo content luôn là empty string nếu null (vì Laravel middleware ConvertEmptyStringsToNull)
-        $validated['content'] = $validated['content'] ?? '';
-
-=======
->>>>>>> origin/dashboard
         $ticket = Ticket::create($validated);
         $ticket->load(['owner', 'responsible', 'status', 'project', 'type', 'priority']);
 
@@ -201,30 +81,9 @@ class TicketController extends Controller
 
     public function update(Request $request, Ticket $ticket)
     {
-<<<<<<< HEAD
-        // Kiểm tra quyền chỉnh sửa nếu không phải admin
-        if (!$this->isAdmin()) {
-            $userId = auth()->id();
-            $hasAccess = $ticket->owner_id === $userId
-                || $ticket->responsible_id === $userId
-                || $ticket->project->owner_id === $userId
-                || $ticket->project->users()->where('users.id', $userId)->exists();
-            
-            if (!$hasAccess) {
-                return response()->json([
-                    'message' => 'You do not have permission to update this ticket.'
-                ], 403);
-            }
-        }
-
-        $validated = $request->validate([
-            'name' => 'sometimes|required|string|max:255',
-            'content' => 'sometimes|required|string',
-=======
         $validated = $request->validate([
             'name' => 'sometimes|required|string|max:255',
             'content' => 'nullable|string',
->>>>>>> origin/dashboard
             'project_id' => 'sometimes|required|exists:projects,id',
             'owner_id' => 'sometimes|required|exists:users,id',
             'responsible_id' => 'nullable|exists:users,id',
@@ -237,14 +96,6 @@ class TicketController extends Controller
             'order' => 'nullable|integer',
         ]);
 
-<<<<<<< HEAD
-        // Đảm bảo content luôn là empty string nếu null (khi content được gửi trong request)
-        if (isset($validated['content']) && $validated['content'] === null) {
-            $validated['content'] = '';
-        }
-
-=======
->>>>>>> origin/dashboard
         $ticket->update($validated);
         $ticket->load(['owner', 'responsible', 'status', 'project', 'type', 'priority']);
 
@@ -253,19 +104,6 @@ class TicketController extends Controller
 
     public function destroy(Ticket $ticket)
     {
-<<<<<<< HEAD
-        // Kiểm tra quyền xóa - chỉ owner hoặc admin mới được xóa
-        if (!$this->isAdmin()) {
-            $userId = auth()->id();
-            if ($ticket->owner_id !== $userId) {
-                return response()->json([
-                    'message' => 'You do not have permission to delete this ticket. Only the owner can delete it.'
-                ], 403);
-            }
-        }
-
-=======
->>>>>>> origin/dashboard
         $ticket->delete();
         return response()->json(['message' => 'Ticket deleted successfully']);
     }
@@ -363,29 +201,6 @@ class TicketController extends Controller
         ]);
     }
 
-<<<<<<< HEAD
-    /**
-     * Update ticket dates from Gantt chart
-     */
-    public function updateDates(Request $request, Ticket $ticket)
-    {
-        // Authorize the action - uses TicketPolicy
-        if (!Gate::allows('update', $ticket)) {
-            return response()->json(['message' => 'You do not have permission to update this ticket.'], 403);
-        }
-
-        $validated = $request->validate([
-            'end' => 'required|date',
-        ]);
-
-        // Note: We are only updating the due_date (end).
-        // The start date in the Gantt is based on created_at, which should not be modified.
-        // For full start date edit capability, a dedicated 'starts_at' column would be needed.
-        $ticket->due_date = $validated['end'];
-        $ticket->save();
-
-        return response()->json($ticket);
-=======
     public function open(Request $request)
     {
         $user = $request->user();
@@ -422,7 +237,6 @@ class TicketController extends Controller
         return response()->json([
             'data' => $tickets
         ]);
->>>>>>> origin/dashboard
     }
 }
 
