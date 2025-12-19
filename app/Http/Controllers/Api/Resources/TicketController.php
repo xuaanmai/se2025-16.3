@@ -6,6 +6,7 @@ use App\Exports\TicketHoursExport;
 use App\Http\Controllers\Controller;
 use App\Models\Ticket;
 use App\Models\TicketHour;
+use App\Models\TicketStatus;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
@@ -65,13 +66,39 @@ class TicketController extends Controller
             'project_id' => 'required|exists:projects,id',
             'owner_id' => 'required|exists:users,id',
             'responsible_id' => 'nullable|exists:users,id',
-            'status_id' => 'required|exists:ticket_statuses,id',
+            'status_id' => 'nullable|exists:ticket_statuses,id', // Changed to nullable
             'type_id' => 'nullable|exists:ticket_types,id',
             'priority_id' => 'nullable|exists:ticket_priorities,id',
             'estimation' => 'nullable|numeric',
             'epic_id' => 'nullable|exists:epics,id',
             'sprint_id' => 'nullable|exists:sprints,id',
         ]);
+
+        // If status_id is not provided, assign the default 'Todo' status
+        if (!isset($validated['status_id'])) {
+            $defaultStatus = TicketStatus::where('name', 'Todo')->whereNull('project_id')->first();
+            if ($defaultStatus) {
+                $validated['status_id'] = $defaultStatus->id;
+            } else {
+                // Fallback: if 'Todo' not found, try to find any default status
+                $defaultStatus = TicketStatus::where('is_default', true)->whereNull('project_id')->first();
+                if ($defaultStatus) {
+                    $validated['status_id'] = $defaultStatus->id;
+                } else {
+                    // If still no status found, assign the first available status.
+                    $firstStatus = TicketStatus::whereNull('project_id')->orderBy('order')->first();
+                    if ($firstStatus) {
+                        $validated['status_id'] = $firstStatus->id;
+                    } else {
+                        // If still no status found, this is a critical setup error.
+                        return response()->json([
+                            'message' => 'No default or available ticket status found. Please ensure statuses are set up.',
+                            'errors' => ['status_id' => ['No default or available ticket status found.']]
+                        ], 422);
+                    }
+                }
+            }
+        }
 
         $ticket = Ticket::create($validated);
         $ticket->load(['owner', 'responsible', 'status', 'project', 'type', 'priority']);

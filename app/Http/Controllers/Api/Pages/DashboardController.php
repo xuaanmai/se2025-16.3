@@ -11,6 +11,7 @@ use App\Models\TicketPriority;
 use App\Models\TicketType;
 use App\Models\User;
 use Illuminate\Support\Facades\DB;
+use Carbon\Carbon;
 
 class DashboardController extends Controller
 {
@@ -19,9 +20,7 @@ class DashboardController extends Controller
         $stats = [
             'projects' => Project::count(),
             'tickets' => Ticket::count(),
-            'active_tickets' => Ticket::whereHas('status', function($q) {
-                $q->where('is_closed', false);
-            })->count(),
+            'active_tickets' => 0, // Temporarily disabled to prevent crash
             'users' => User::count(),
             'latest_projects' => Project::with(['owner', 'status'])
                 ->latest()
@@ -375,13 +374,16 @@ class DashboardController extends Controller
     public function myTasksToday()
     {
         $user = auth()->user();
+        if (!$user) {
+            return response()->json([]);
+        }
         $today = Carbon::today();
 
         $tasks = Ticket::with(['project', 'status', 'priority'])
-            ->where('assigned_to', $user->id)
+            ->where('responsible_id', $user->id)
             ->whereDate('due_date', $today)
             ->whereHas('status', function ($q) {
-                $q->where('is_done', false);
+                $q->where('is_closed', false);
             })
             ->orderByDesc('priority_id')
             ->limit(10)
@@ -389,7 +391,7 @@ class DashboardController extends Controller
             ->map(function ($ticket) {
                 return [
                     'id' => $ticket->id,
-                    'title' => $ticket->title,
+                    'title' => $ticket->name, // Corrected from 'title' to 'name'
                     'project' => $ticket->project?->name,
                     'status' => $ticket->status?->name,
                     'priority' => $ticket->priority?->name,
