@@ -10,44 +10,16 @@ use App\Models\ProjectStatus;
 use App\Models\TicketStatus;
 use App\Models\User;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 use Maatwebsite\Excel\Facades\Excel;
 
 class ProjectController extends Controller
 {
-    /**
-     * Kiểm tra xem user hiện tại có phải admin không
-     * Admin = có role "Admin"
-     */
-    protected function isAdmin(): bool
-    {
-        /** @var User|null $user */
-        $user = Auth::user();
-        if (!$user) {
-            return false;
-        }
-        
-        return $user->hasRole('Admin');
-    }
-
     public function index(Request $request)
     {
-        $userId = auth()->id();
         $query = Project::with(['owner', 'status', 'users'])
             ->withCount(['tickets']);
-
-        // Nếu không phải admin, chỉ lấy projects mà user có quyền truy cập
-        if (!$this->isAdmin()) {
-            $query->where(function ($query) use ($userId) {
-                $query->where('owner_id', $userId)
-                    ->orWhereHas('users', function ($query) use ($userId) {
-                        $query->where('users.id', $userId);
-                    });
-            });
-        }
 
         // Search
         if ($request->has('search')) {
@@ -59,34 +31,41 @@ class ProjectController extends Controller
             $query->where('status_id', $request->status_id);
         }
 
-        // Pagination
+        // Handle pagination
         $perPage = $request->get('per_page', 15);
-        $projects = $query->paginate($perPage);
+        if ($perPage == -1) {
+            $projects = $query->get();
+        } else {
+            $projects = $query->paginate($perPage);
+        }
 
         return response()->json($projects);
     }
 
     public function show(Project $project)
-    {
-        // Kiểm tra quyền truy cập project nếu không phải admin
-        if (!$this->isAdmin()) {
-            $userId = auth()->id();
-            if ($project->owner_id != $userId && !$project->users()->where('users.id', $userId)->exists()) {
-                return response()->json([
-                    'message' => 'You do not have permission to view this project.'
-                ], 403);
-            }
+        {
+            $project->load([
+                'owner', 
+                'status', 
+                'users',
+                'tickets.status', 
+                'tickets.priority', 
+                'tickets.responsible',
+                'statuses', 
+                'sprints', 
+                'epics'
+            ]);
+
+            return response()->json($project);
         }
 
-        $project->load(['owner', 'status', 'users', 'tickets', 'statuses', 'sprints', 'epics']);
-        return response()->json($project);
-    }
 
     public function store(Request $request)
     {
         $validated = $request->validate([
             'name' => 'required|string|max:255',
             'description' => 'nullable|string',
+            'owner_id' => 'nullable|exists:users,id',
             'status_id' => 'nullable|exists:project_statuses,id',
             'ticket_prefix' => 'required|string|max:3|unique:projects,ticket_prefix',
             'type' => 'required|in:kanban,scrum',
@@ -95,9 +74,6 @@ class ProjectController extends Controller
             'user_ids' => 'nullable|array',
             'user_ids.*' => 'exists:users,id',
         ]);
-
-        // Tự động set owner_id là user hiện tại khi tạo project mới
-        $validated['owner_id'] = auth()->id();
 
         // Set default values như Filament
         if (!isset($validated['owner_id'])) {
@@ -138,23 +114,6 @@ class ProjectController extends Controller
 
     public function update(Request $request, Project $project)
     {
-        // Kiểm tra quyền chỉnh sửa project nếu không phải admin
-        if (!$this->isAdmin()) {
-            $userId = auth()->id();
-            // Chỉ owner hoặc user được mời với role can_manage mới được update
-            $canManage = $project->owner_id === $userId
-                || $project->users()
-                    ->where('users.id', $userId)
-                    ->where('role', config('system.projects.affectations.roles.can_manage'))
-                    ->exists();
-            
-            if (!$canManage) {
-                return response()->json([
-                    'message' => 'You do not have permission to update this project.'
-                ], 403);
-            }
-        }
-
         $validated = $request->validate([
             'name' => 'sometimes|required|string|max:255',
             'description' => 'nullable|string',
@@ -221,16 +180,6 @@ class ProjectController extends Controller
 
     public function destroy(Project $project)
     {
-        // Kiểm tra quyền xóa - chỉ owner hoặc admin mới được xóa
-        if (!$this->isAdmin()) {
-            $userId = auth()->id();
-            if ($project->owner_id !== $userId) {
-                return response()->json([
-                    'message' => 'You do not have permission to delete this project. Only the owner can delete it.'
-                ], 403);
-            }
-        }
-
         $project->delete();
         return response()->json(['message' => 'Project deleted successfully']);
     }
@@ -298,22 +247,6 @@ class ProjectController extends Controller
      */
     public function attachUser(Request $request, Project $project)
     {
-        // Kiểm tra quyền - chỉ owner hoặc admin project mới được thêm user
-        if (!$this->isAdmin()) {
-            $userId = auth()->id();
-            $canManage = $project->owner_id === $userId
-                || $project->users()
-                    ->where('users.id', $userId)
-                    ->where('role', config('system.projects.affectations.roles.can_manage'))
-                    ->exists();
-            
-            if (!$canManage) {
-                return response()->json([
-                    'message' => 'You do not have permission to add users to this project.'
-                ], 403);
-            }
-        }
-
         $validated = $request->validate([
             'user_id' => 'required|exists:users,id',
             'role' => 'required|string|in:' . implode(',', array_keys(config('system.projects.affectations.roles.list', []))),
@@ -342,22 +275,6 @@ class ProjectController extends Controller
      */
     public function updateUserRole(Request $request, Project $project, User $user)
     {
-        // Kiểm tra quyền - chỉ owner hoặc admin project mới được cập nhật role
-        if (!$this->isAdmin()) {
-            $userId = auth()->id();
-            $canManage = $project->owner_id === $userId
-                || $project->users()
-                    ->where('users.id', $userId)
-                    ->where('role', config('system.projects.affectations.roles.can_manage'))
-                    ->exists();
-            
-            if (!$canManage) {
-                return response()->json([
-                    'message' => 'You do not have permission to update user roles in this project.'
-                ], 403);
-            }
-        }
-
         // Check if user is attached to project
         if (!$project->users()->where('users.id', $user->id)->exists()) {
             return response()->json([
@@ -384,22 +301,6 @@ class ProjectController extends Controller
      */
     public function detachUser(Project $project, User $user)
     {
-        // Kiểm tra quyền - chỉ owner hoặc admin project mới được xóa user
-        if (!$this->isAdmin()) {
-            $userId = auth()->id();
-            $canManage = $project->owner_id === $userId
-                || $project->users()
-                    ->where('users.id', $userId)
-                    ->where('role', config('system.projects.affectations.roles.can_manage'))
-                    ->exists();
-            
-            if (!$canManage) {
-                return response()->json([
-                    'message' => 'You do not have permission to remove users from this project.'
-                ], 403);
-            }
-        }
-
         // Check if user is attached to project
         if (!$project->users()->where('users.id', $user->id)->exists()) {
             return response()->json([
@@ -466,5 +367,4 @@ class ProjectController extends Controller
         return $query->paginate(12);
     }
 }
-
 
