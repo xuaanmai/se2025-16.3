@@ -1,8 +1,4 @@
-<<<<<<< HEAD
-<template>
-=======
 <!-- <template>
->>>>>>> origin/dashboard
   <div class="bg-white p-6 rounded-lg shadow-md">
     <div class="flex justify-between items-center mb-4">
       <h3 class="font-semibold text-lg text-gray-800">{{ title }}</h3>
@@ -30,8 +26,6 @@ const props = defineProps({
     default: 'Chart'
   }
 });
-<<<<<<< HEAD
-=======
 </script> -->
 
 <template>
@@ -63,5 +57,4 @@ const props = defineProps({
     default: 'Chart',
   },
 })
->>>>>>> origin/dashboard
 </script>
