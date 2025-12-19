@@ -1,8 +1,4 @@
-<<<<<<< HEAD
-
-=======
 <!-- 
->>>>>>> origin/dashboard
 <template>
   <Doughnut v-if="chartData" :data="data" :options="options" />
 </template>
@@ -40,9 +36,6 @@ const options = {
     },
   },
 };
-<<<<<<< HEAD
-</script>
-=======
 </script> -->
 
 <script setup>
@@ -83,4 +76,3 @@ const options = {
     </div>
   </div>
 </template>
->>>>>>> origin/dashboard
