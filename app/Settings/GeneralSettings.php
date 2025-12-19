@@ -6,6 +6,7 @@ use Spatie\LaravelSettings\Settings;
 
 class GeneralSettings extends Settings
 {
+    protected static bool $ignoreMissingSettings = true;
 
     public string $site_name;
     public bool $enable_registration;

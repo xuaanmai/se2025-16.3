@@ -7,6 +7,6 @@ class AddDefaultRoleToGeneralSettings extends SettingsMigration
 {
     public function up(): void
     {
-        $this->migrator->add('general.default_role');
+        // $this->migrator->add('general.default_role');
     }
 }
