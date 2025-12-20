@@ -50,7 +50,7 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue';
+import { ref, computed, onMounted } from 'vue';
 import { useAuthStore } from '@/stores';
 import { useTicketsStore } from '@/stores/tickets';
 import TicketFormModal from '../Tickets/TicketFormModal.vue';
@@ -73,6 +73,7 @@ const ticketsStore = useTicketsStore();
 
 const isModalOpen = ref(false);
 const selectedTicket = ref(null);
+const editingTicket = ref(null);
 
 const canManage = computed(() => {
   if (!authStore.user || !props.project) {
@@ -94,16 +95,27 @@ const closeModal = () => {
   selectedTicket.value = null;
 };
 
-const handleSave = async (ticketData) => {
-  if (ticketData.id) {
-    // Update logic would go here if needed
-    // await ticketsStore.updateTicket(ticketData.id, ticketData);
-  } else {
-    await ticketsStore.createTicket(ticketData);
-  }
-  if (!ticketsStore.error) {
-    closeModal();
-    emit('ticket-created'); // Emit event to parent
+const handleSave = async (formData) => {
+  try {
+    // SỬA: Thay props.projectId bằng props.project.id
+    const payload = { 
+      ...formData, 
+      project_id: props.project.id // Lấy ID từ object project có sẵn trong props
+    };
+
+    if (editingTicket.value) {
+      await ticketsStore.updateTicket(editingTicket.value.id, payload);
+    } else {
+      await ticketsStore.createTicket(payload);
+    }
+    
+    isModalOpen.value = false;
+    editingTicket.value = null;
+    
+    // Emit để ProjectDetail load lại dữ liệu mới
+    emit('ticket-created'); 
+  } catch (error) {
+    console.error('Lỗi khi lưu ticket:', error);
   }
 };
 </script>

@@ -24,25 +24,24 @@
 
     <!-- Tab Content -->
     <div>
-      <div v-show="currentTab === 'Tickets'" v-if="project && project.tickets">
+      <div v-if="currentTab === 'Tickets' && project">
         <ProjectTickets :tickets="project.tickets" :project="project" @ticket-created="refreshProjectData" />
       </div>
-      <div v-show="currentTab === 'Members'">
+
+      <div v-if="currentTab === 'Members' && project">
         <ProjectMembers :project="project" />
       </div>
-      <div v-show="currentTab === 'Kanban'">
+
+      <div v-if="currentTab === 'Kanban' && project?.type === 'kanban'">
         <ProjectKanbanTab :project="project" />
       </div>
-      <div v-show="currentTab === 'Sprints'">
+
+      <div v-if="currentTab === 'Sprints' && project?.type === 'scrum'">
         <ProjectSprintsTab :project="project" />
       </div>
-      <div v-show="currentTab === 'Roadmap'">
+
+      <div v-if="currentTab === 'Roadmap' && project">
         <GanttChart :project="project" />
-      </div>
-       <div v-show="currentTab === 'Settings'">
-        <h2 class="text-xl font-semibold mb-4">Settings</h2>
-        <p>Project settings will be displayed here.</p>
-        <!-- Settings component will go here -->
       </div>
     </div>
 

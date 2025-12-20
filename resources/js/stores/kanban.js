@@ -16,29 +16,32 @@ export const useKanbanStore = defineStore('kanban', {
   },
 
   actions: {
-    async fetchBoard(projectId) {
+    async fetchBoard(projectId, projectType = 'kanban') {
       this.loading = true;
       this.error = null;
       try {
-        // Based on the documentation, we need to get statuses (columns) and tickets
+        // Xác định endpoint dựa trên loại dự án
+        const ticketEndpoint = projectType === 'scrum' ? 'scrum' : 'kanban';
+        
         const [statusesRes, ticketsRes] = await Promise.all([
           api.get(`/projects/${projectId}/kanban/statuses`),
-          api.get(`/projects/${projectId}/kanban/tickets`),
+          api.get(`/projects/${projectId}/${ticketEndpoint}/tickets`), // Gọi linh hoạt scrum/tickets hoặc kanban/tickets
         ]);
 
-        const statuses = statusesRes.data;
-        const tickets = ticketsRes.data;
+        const statuses = statusesRes.data;  
+        const rawTickets = ticketsRes.data;
+        const tickets = Array.isArray(rawTickets) ? rawTickets : (rawTickets.tickets || []);
 
-        // Map statuses to columns and distribute tickets into them
         this.board.columns = statuses.map(status => ({
           id: status.id,
           title: status.title,
           color: status.color,
-          tasks: tickets.filter(ticket => ticket.status === status.id)
+          // Dùng status.id để lọc vì Backend trả về status id
+          tasks: tickets.filter(ticket => (ticket.status_id || ticket.status) === status.id)
         }));
 
       } catch (err) {
-        this.error = 'Failed to fetch Kanban board data.';
+        this.error = 'Cannot load board data.';
         console.error(err);
       } finally {
         this.loading = false;

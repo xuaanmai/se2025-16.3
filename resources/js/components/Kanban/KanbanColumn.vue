@@ -19,7 +19,10 @@
         @change="onDragChange"
       >
         <template #item="{ element }">
-          <TaskCard :task="element" @view-task="emit('view-task', element)" />
+          <TaskCard 
+            :ticket="element" 
+            @view-task="$emit('view-task', $event)" 
+          />
         </template>
       </draggable>
     </div>

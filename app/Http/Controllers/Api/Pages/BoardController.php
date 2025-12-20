@@ -7,6 +7,7 @@ use App\Models\Project;
 use App\Models\Ticket;
 use App\Models\TicketStatus;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 
 class BoardController extends Controller
 {
@@ -41,7 +42,7 @@ class BoardController extends Controller
     {
         // Check access
         if ($project->owner_id != auth()->id() && 
-            !$project->users->where('id', auth()->id')->count()) {
+            !$project->users->where('id', auth()->id())->count()) {
             return response()->json(['message' => 'Unauthorized'], 403);
         }
 
@@ -58,6 +59,7 @@ class BoardController extends Controller
         // Get ticket counts for all relevant statuses in a single query
         $ticketCounts = Ticket::select('status_id', DB::raw('count(*) as count'))
             ->where('project_id', $project->id)
+            ->active()
             ->whereIn('status_id', $statuses->pluck('id'))
             ->groupBy('status_id')
             ->pluck('count', 'status_id'); // Pluck counts into an associative array
@@ -72,75 +74,85 @@ class BoardController extends Controller
             ];
         });
 
-        return response()->json($mappedStatuses);
+        return TicketStatus::where('project_id', $project->id)
+        ->orWhereNull('project_id')
+        ->withCount(['tickets' => function ($query) use ($project) {
+            $query->where('project_id', $project->id);
+        }])
+        ->orderBy('order')
+        ->get()
+        ->map(function ($status) {
+            return [
+                'id' => $status->id,
+                'title' => $status->name, // Đổi 'name' thành 'title' để khớp TaskCard.vue
+                'color' => $status->color,
+                'count' => $status->tickets_count, // Lấy từ withCount
+            ];
+        });
     }
 
     /**
      * Get Kanban board tickets
      */
-    public function getKanbanTickets(Request $request, Project $project)
-    {
-        // Check access
-        if ($project->owner_id != auth()->id() && 
-            !$project->users->where('id', auth()->id)->count()) {
-            return response()->json(['message' => 'Unauthorized'], 403);
-        }
-
-        // Check project type
-        if ($project->type === 'scrum') {
-            return response()->json([
-                'message' => 'This project uses Scrum. Use /api/projects/{project}/scrum/tickets endpoint.',
-                'errors' => ['type' => ['Project type is scrum, not kanban']]
-            ], 422);
-        }
-
-        $query = Ticket::with(['project', 'owner', 'responsible', 'status', 'type', 'priority', 'epic', 'relations'])
-            ->where('project_id', $project->id);
-
-        // Filter by users (owners/responsibles)
-        if ($request->has('users') && is_array($request->users) && count($request->users) > 0) {
-            $query->where(function ($q) use ($request) {
-                $q->whereIn('owner_id', $request->users)
-                  ->orWhereIn('responsible_id', $request->users);
-            });
-        }
-
-        // Filter by types
-        if ($request->has('types') && is_array($request->types) && count($request->types) > 0) {
-            $query->whereIn('type_id', $request->types);
-        }
-
-        // Filter by priorities
-        if ($request->has('priorities') && is_array($request->priorities) && count($request->priorities) > 0) {
-            $query->whereIn('priority_id', $request->priorities);
-        }
-
-        // Filter not affected tickets
-        if ($request->boolean('includeNotAffectedTickets')) {
-            $query->whereNull('responsible_id');
-        }
-
-        // Only show tickets user has access to
-        $tickets = $query->orderBy('order')->get()
-            ->map(function ($ticket) {
-                return [
-                    'id' => $ticket->id,
-                    'code' => $ticket->code,
-                    'title' => $ticket->name,
-                    'owner' => $ticket->owner,
-                    'type' => $ticket->type,
-                    'responsible' => $ticket->responsible,
-                    'project' => $ticket->project,
-                    'status' => $ticket->status?->id,
-                    'priority' => $ticket->priority,
-                    'epic' => $ticket->epic,
-                    'relations' => $ticket->relations,
-                    'totalLoggedHours' => $ticket->totalLoggedSeconds ? $ticket->totalLoggedHours : null,
-                ];
-            });
-
-        return response()->json($tickets);
+   public function getKanbanTickets(Request $request, Project $project) {
+    // 1. Sửa lỗi cú pháp: auth()->id thành auth()->id()
+    if ($project->owner_id != auth()->id() && 
+        !$project->users->where('id', auth()->id())->count()) {
+        return response()->json(['message' => 'Unauthorized'], 403);
     }
+
+    // 2. Kiểm tra loại dự án (Scrum/Kanban)
+    if ($project->type === 'scrum') {
+        return response()->json([
+            'message' => 'This project uses Scrum. Use /api/projects/{project}/scrum/tickets endpoint.',
+            'errors' => ['type' => ['Project type is scrum, not kanban']]
+        ], 422);
+    }
+
+    // 3. Eager Loading các quan hệ cần thiết để tránh lỗi N+1
+    $query = Ticket::with(['project', 'owner', 'responsible', 'status', 'type', 'priority', 'epic', 'relations'])
+        ->where('project_id', $project->id);
+
+    // 4. Áp dụng các bộ lọc (Filters)
+    if ($request->has('users') && is_array($request->users) && count($request->users) > 0) {
+        $query->where(function ($q) use ($request) {
+            $q->whereIn('owner_id', $request->users)
+              ->orWhereIn('responsible_id', $request->users);
+        });
+    }
+
+    if ($request->has('types') && is_array($request->types) && count($request->types) > 0) {
+        $query->whereIn('type_id', $request->types);
+    }
+
+    if ($request->has('priorities') && is_array($request->priorities) && count($request->priorities) > 0) {
+        $query->whereIn('priority_id', $request->priorities);
+    }
+
+    if ($request->boolean('includeNotAffectedTickets')) {
+        $query->whereNull('responsible_id');
+    }
+
+    // 5. Mapping dữ liệu an toàn (Sử dụng toán tử null-safe ?->)
+    $tickets = $query->orderBy('order')->get()
+        ->map(function ($ticket) {
+            return [
+                'id' => $ticket->id,
+                'code' => $ticket->code,
+                'title' => $ticket->name,
+                'responsible' => $ticket->responsible ? [
+                    'id' => $ticket->responsible->id,
+                    'name' => $ticket->responsible->name,
+                    'avatar' => $ticket->responsible->avatar,
+                ] : null, // Trả về null rõ ràng hoặc object mặc định
+                'status_id' => $ticket->status_id,
+                'priority' => $ticket->priority,
+                'type' => $ticket->type,
+            ];
+        });
+
+    return response()->json($tickets);
+}
 
     /**
      * Get Scrum board sprint info

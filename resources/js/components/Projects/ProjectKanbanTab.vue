@@ -55,7 +55,8 @@ const kanbanStore = useKanbanStore();
 // Watch for changes in the project prop and fetch the board
 watch(() => props.project.id, (newId) => {
   if (newId) {
-    kanbanStore.fetchBoard(newId);
+    // Truyền cả ID và Type của project vào hàm fetchBoard
+    kanbanStore.fetchBoard(newId, props.project.type);
   }
 }, { immediate: true });
 
