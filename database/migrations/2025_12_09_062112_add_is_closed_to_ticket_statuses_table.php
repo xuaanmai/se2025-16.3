@@ -13,12 +13,8 @@ return new class extends Migration
      */
     public function up()
     {
-        Schema::create('project_users', function (Blueprint $table) {
-            $table->id();
-            $table->foreignId('user_id')->constrained('users');
-            $table->foreignId('project_id')->constrained('projects');
-            $table->string('role');
-            $table->timestamps();
+        Schema::table('ticket_statuses', function (Blueprint $table) {
+            $table->boolean('is_closed')->default(false)->after('is_default');
         });
     }
 
@@ -29,6 +25,8 @@ return new class extends Migration
      */
     public function down()
     {
-        Schema::dropIfExists('project_users');
+        Schema::table('ticket_statuses', function (Blueprint $table) {
+            $table->dropColumn('is_closed');
+        });
     }
 };
