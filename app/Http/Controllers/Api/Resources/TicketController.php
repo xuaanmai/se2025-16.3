@@ -2,10 +2,12 @@
 
 namespace App\Http\Controllers\Api\Resources;
 
+use App\Models\Project;
 use App\Exports\TicketHoursExport;
 use App\Http\Controllers\Controller;
 use App\Models\Ticket;
 use App\Models\TicketHour;
+use App\Models\TicketStatus;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
@@ -57,24 +59,51 @@ class TicketController extends Controller
         return response()->json($ticket);
     }
 
-    public function store(Request $request)
+  public function store(Request $request)
     {
         $validated = $request->validate([
             'name' => 'required|string|max:255',
-            'content' => 'nullable|string',
+            'content' => 'nullable|string', // Đã thêm: Nhận nội dung từ frontend
             'project_id' => 'required|exists:projects,id',
-            'owner_id' => 'required|exists:users,id',
+            'owner_id' => 'nullable|exists:users,id',
             'responsible_id' => 'nullable|exists:users,id',
-            'status_id' => 'required|exists:ticket_statuses,id',
+            'status_id' => 'nullable|exists:ticket_statuses,id',
             'type_id' => 'nullable|exists:ticket_types,id',
             'priority_id' => 'nullable|exists:ticket_priorities,id',
-            'estimation' => 'nullable|numeric',
-            'epic_id' => 'nullable|exists:epics,id',
+            'estimation' => 'nullable|numeric|min:0',
             'sprint_id' => 'nullable|exists:sprints,id',
+            'epic_id' => 'nullable|exists:epics,id',
         ]);
 
+        // Đảm bảo content không bị null khi lưu vào DB
+        if (!isset($validated['content'])) {
+            $validated['content'] = '';
+        }
+
+        // Tự động gán owner_id là người dùng hiện tại nếu chưa có
+        if (!isset($validated['owner_id'])) {
+            $validated['owner_id'] = auth()->id();
+        }
+
+        // Gán status mặc định nếu chưa chọn
+        if (!isset($validated['status_id'])) {
+            $defaultStatus = TicketStatus::where('is_default', true)
+                ->where(function ($query) use ($validated) {
+                    $query->where('project_id', $validated['project_id'])
+                        ->orWhereNull('project_id');
+                })->first();
+            
+            if ($defaultStatus) {
+                $validated['status_id'] = $defaultStatus->id;
+            }
+        }
+
+        // Tạo mã ticket tự động (Code)
+        $project = Project::find($validated['project_id']);
+        $validated['code'] = $project->ticket_prefix . '-' . (Ticket::where('project_id', $project->id)->count() + 1);
+        $validated['order'] = Ticket::where('project_id', $project->id)->max('order') + 1;
+
         $ticket = Ticket::create($validated);
-        $ticket->load(['owner', 'responsible', 'status', 'project', 'type', 'priority']);
 
         return response()->json($ticket, 201);
     }
@@ -239,5 +268,3 @@ class TicketController extends Controller
         ]);
     }
 }
-
-

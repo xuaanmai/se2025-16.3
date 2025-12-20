@@ -29,13 +29,13 @@
   ),
   'dutchcodingcompany/filament-socialite' => 
   array (
-    'providers' => 
-    array (
-      0 => 'DutchCodingCompany\\FilamentSocialite\\FilamentSocialiteServiceProvider',
-    ),
     'aliases' => 
     array (
       'FilamentSocialite' => 'DutchCodingCompany\\FilamentSocialite\\Facades\\FilamentSocialite',
+    ),
+    'providers' => 
+    array (
+      0 => 'DutchCodingCompany\\FilamentSocialite\\FilamentSocialiteServiceProvider',
     ),
   ),
   'filament/filament' => 
@@ -89,24 +89,24 @@
   ),
   'intervention/image' => 
   array (
-    'providers' => 
-    array (
-      0 => 'Intervention\\Image\\ImageServiceProvider',
-    ),
     'aliases' => 
     array (
       'Image' => 'Intervention\\Image\\Facades\\Image',
     ),
+    'providers' => 
+    array (
+      0 => 'Intervention\\Image\\ImageServiceProvider',
+    ),
   ),
   'jeffgreco13/filament-breezy' => 
   array (
-    'providers' => 
-    array (
-      0 => 'JeffGreco13\\FilamentBreezy\\FilamentBreezyServiceProvider',
-    ),
     'aliases' => 
     array (
       'FilamentBreezy' => 'JeffGreco13\\FilamentBreezy\\Facades\\FilamentBreezy',
+    ),
+    'providers' => 
+    array (
+      0 => 'JeffGreco13\\FilamentBreezy\\FilamentBreezyServiceProvider',
     ),
   ),
   'kkomelin/laravel-translatable-string-exporter' => 
@@ -132,13 +132,13 @@
   ),
   'laravel/socialite' => 
   array (
-    'providers' => 
-    array (
-      0 => 'Laravel\\Socialite\\SocialiteServiceProvider',
-    ),
     'aliases' => 
     array (
       'Socialite' => 'Laravel\\Socialite\\Facades\\Socialite',
+    ),
+    'providers' => 
+    array (
+      0 => 'Laravel\\Socialite\\SocialiteServiceProvider',
     ),
   ),
   'laravel/tinker' => 
@@ -150,13 +150,13 @@
   ),
   'livewire/livewire' => 
   array (
-    'providers' => 
-    array (
-      0 => 'Livewire\\LivewireServiceProvider',
-    ),
     'aliases' => 
     array (
       'Livewire' => 'Livewire\\Livewire',
+    ),
+    'providers' => 
+    array (
+      0 => 'Livewire\\LivewireServiceProvider',
     ),
   ),
   'maatwebsite/excel' => 
@@ -207,24 +207,24 @@
   ),
   'ryangjchandler/blade-capture-directive' => 
   array (
-    'providers' => 
-    array (
-      0 => 'RyanChandler\\BladeCaptureDirective\\BladeCaptureDirectiveServiceProvider',
-    ),
     'aliases' => 
     array (
       'BladeCaptureDirective' => 'RyanChandler\\BladeCaptureDirective\\Facades\\BladeCaptureDirective',
     ),
+    'providers' => 
+    array (
+      0 => 'RyanChandler\\BladeCaptureDirective\\BladeCaptureDirectiveServiceProvider',
+    ),
   ),
   'spatie/laravel-ignition' => 
   array (
-    'providers' => 
-    array (
-      0 => 'Spatie\\LaravelIgnition\\IgnitionServiceProvider',
-    ),
     'aliases' => 
     array (
       'Flare' => 'Spatie\\LaravelIgnition\\Facades\\Flare',
+    ),
+    'providers' => 
+    array (
+      0 => 'Spatie\\LaravelIgnition\\IgnitionServiceProvider',
     ),
   ),
   'spatie/laravel-medialibrary' => 
