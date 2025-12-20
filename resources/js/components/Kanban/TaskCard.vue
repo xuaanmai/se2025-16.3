@@ -8,8 +8,7 @@
     
     <div class="flex justify-between items-center mt-3">
       <div class="flex items-center">
-        <img v-if="task.assignee" class="h-6 w-6 rounded-full object-cover" :src="task.assignee.avatar" :alt="task.assignee.name">
-        <span v-else class="h-6 w-6 rounded-full bg-gray-200 flex items-center justify-center text-xs font-semibold text-gray-500">?</span>
+        <img class="h-6 w-6 rounded-full object-cover" :src="task.assignee.avatar" :alt="task.assignee.name">
       </div>
       <span 
         class="px-2 py-1 text-xs font-medium rounded-full"

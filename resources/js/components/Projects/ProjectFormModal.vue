@@ -126,7 +126,7 @@ watch(
         description: newProject.description || '',
         ticket_prefix: newProject.ticket_prefix,
         type: newProject.type,
-        status_type: newProject.status_type || 'basic',
+        status_type: newProject.status_type || 'default', // Sửa từ 'basic' thành 'default'
         cover_image: null,
       };
     } else {
@@ -136,7 +136,7 @@ watch(
         description: '',
         ticket_prefix: '',
         type: 'kanban',
-        status_type: 'basic',
+        status_type: 'default', // Sửa từ 'basic' thành 'default'
         cover_image: null,
       };
     }

@@ -42,7 +42,7 @@
             </td>
             <td class="px-5 py-5 border-b border-gray-200 bg-white text-sm text-right">
               <button @click="openEditModal(user)" class="text-indigo-600 hover:text-indigo-900 mr-4">Edit</button>
-              <button @click="openDeleteModal(user)" class="text-red-600 hover:text-red-900">Delete</button>
+              <button @click="confirmDelete(user)" class="text-red-600 hover:text-red-900">Delete</button>
             </td>
           </tr>
            <tr v-if="usersStore.users.length === 0">
@@ -75,20 +75,10 @@
 
     <!-- User Form Modal -->
     <UserFormModal 
-      v-if="isFormModalOpen" 
+      v-if="isModalOpen" 
       :user="selectedUser"
-      @close="closeFormModal" 
+      @close="closeModal" 
       @save="handleSave" 
-    />
-
-    <!-- Confirmation Modal -->
-    <ConfirmationModal
-      :show="isDeleteModalOpen"
-      title="Delete User"
-      :message="`Are you sure you want to delete the user '${userToDelete?.name}'? This action is permanent.`"
-      confirm-button-text="Delete"
-      @close="closeDeleteModal"
-      @confirm="handleDelete"
     />
 
   </div>
@@ -99,16 +89,11 @@ import { ref, onMounted } from 'vue';
 import { useUsersStore } from '@/stores/users';
 import { useReferentialStore } from '@/stores/referentials';
 import UserFormModal from '../components/Users/UserFormModal.vue';
-import ConfirmationModal from '../components/ConfirmationModal.vue';
 
 const usersStore = useUsersStore();
 const referentialStore = useReferentialStore();
-
-const isFormModalOpen = ref(false);
+const isModalOpen = ref(false);
 const selectedUser = ref(null);
-
-const isDeleteModalOpen = ref(false);
-const userToDelete = ref(null);
 
 onMounted(() => {
   usersStore.fetchUsers();
@@ -121,48 +106,37 @@ const changePage = (page) => {
   }
 };
 
-// Form Modal (Create/Edit)
 const openCreateModal = () => {
   selectedUser.value = null;
-  isFormModalOpen.value = true;
+  isModalOpen.value = true;
 };
 
 const openEditModal = (user) => {
   selectedUser.value = { ...user };
-  isFormModalOpen.value = true;
+  isModalOpen.value = true;
 };
 
-const closeFormModal = () => {
-  isFormModalOpen.value = false;
+const closeModal = () => {
+  isModalOpen.value = false;
   selectedUser.value = null;
 };
 
 const handleSave = async (userData) => {
   if (userData.id) {
+    // Update
     await usersStore.updateUser(userData.id, userData);
   } else {
+    // Create
     await usersStore.createUser(userData);
   }
   if (!usersStore.error) {
-    closeFormModal();
+    closeModal();
   }
 };
 
-// Delete Modal
-const openDeleteModal = (user) => {
-  userToDelete.value = user;
-  isDeleteModalOpen.value = true;
-};
-
-const closeDeleteModal = () => {
-  isDeleteModalOpen.value = false;
-  userToDelete.value = null;
-};
-
-const handleDelete = () => {
-  if (userToDelete.value) {
-    usersStore.deleteUser(userToDelete.value.id);
+const confirmDelete = (user) => {
+  if (window.confirm(`Are you sure you want to delete the user "${user.name}"?`)) {
+    usersStore.deleteUser(user.id);
   }
-  closeDeleteModal();
 };
 </script>

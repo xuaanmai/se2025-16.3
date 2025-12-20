@@ -2,7 +2,7 @@
 <template>
   <div class="space-y-6">
     <!-- Add Member Form -->
-    <div class="bg-white p-4 rounded-lg shadow">
+    <div v-if="canManage" class="bg-white p-4 rounded-lg shadow">
       <h3 class="font-semibold text-lg mb-2">Add New Member</h3>
       <form @submit.prevent="handleAddUser" class="flex items-end space-x-4">
         <div class="flex-grow">
@@ -32,23 +32,24 @@
           <tr>
             <th class="px-5 py-3 border-b-2 border-gray-200 bg-gray-100 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Name</th>
             <th class="px-5 py-3 border-b-2 border-gray-200 bg-gray-100 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Role</th>
-            <th class="px-5 py-3 border-b-2 border-gray-200 bg-gray-100"></th>
+            <th v-if="canManage" class="px-5 py-3 border-b-2 border-gray-200 bg-gray-100"></th>
           </tr>
         </thead>
         <tbody>
-          <tr v-for="member in members" :key="member.id" class="hover:bg-gray-50">
+          <tr v-for="member in project.users" :key="member.id" class="hover:bg-gray-50">
             <td class="px-5 py-5 border-b border-gray-200 bg-white text-sm">
               <p class="font-semibold">{{ member.name }}</p>
               <p class="text-gray-600">{{ member.email }}</p>
             </td>
             <td class="px-5 py-5 border-b border-gray-200 bg-white text-sm">
-              <select v-model="member.pivot.role" @change="updateRole(member.id, $event.target.value)" class="form-select py-1">
+              <select v-if="canManage" v-model="member.pivot.role" @change="updateRole(member.id, $event.target.value)" class="form-select py-1">
                 <option>member</option>
                 <option>manager</option>
                 <option>viewer</option>
               </select>
+              <span v-else>{{ member.pivot.role }}</span>
             </td>
-            <td class="px-5 py-5 border-b border-gray-200 bg-white text-sm text-right">
+            <td v-if="canManage" class="px-5 py-5 border-b border-gray-200 bg-white text-sm text-right">
               <button @click="removeUser(member.id)" class="text-red-600 hover:text-red-900">Remove</button>
             </td>
           </tr>
@@ -68,35 +69,42 @@
 import { ref, computed } from 'vue';
 import { useProjectsStore } from '@/stores/projects';
 import { useReferentialStore } from '@/stores/referentials';
+import { useAuthStore } from '@/stores';
 
 const props = defineProps({
-  projectId: {
-    type: [String, Number],
-    required: true,
-  },
-  members: {
-    type: Array,
+  project: {
+    type: Object,
     required: true,
   },
 });
 
 const projectsStore = useProjectsStore();
 const referentialStore = useReferentialStore();
+const authStore = useAuthStore();
 
 const newUser = ref({
   id: '',
   role: 'member',
 });
 
+const canManage = computed(() => {
+  if (!authStore.user || !props.project) {
+    return false;
+  }
+  // Check if the current user is the owner of the project.
+  return authStore.user.id === props.project.owner_id;
+});
+
 // Filter out users who are already members of the project
 const availableUsers = computed(() => {
-  const memberIds = new Set(props.members.map(m => m.id));
+  if (!props.project?.users) return referentialStore.users;
+  const memberIds = new Set(props.project.users.map(m => m.id));
   return referentialStore.users.filter(u => !memberIds.has(u.id));
 });
 
 const handleAddUser = async () => {
   if (!newUser.value.id) return;
-  await projectsStore.attachUser(props.projectId, {
+  await projectsStore.attachUser(props.project.id, {
     user_id: newUser.value.id,
     role: newUser.value.role,
   });
@@ -107,12 +115,12 @@ const handleAddUser = async () => {
 };
 
 const updateRole = async (userId, role) => {
-  await projectsStore.updateUserRole(props.projectId, userId, role);
+  await projectsStore.updateUserRole(props.project.id, userId, role);
 };
 
 const removeUser = async (userId) => {
   if (window.confirm('Are you sure you want to remove this member from the project?')) {
-    await projectsStore.detachUser(props.projectId, userId);
+    await projectsStore.detachUser(props.project.id, userId);
   }
 };
 </script>

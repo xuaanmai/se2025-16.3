@@ -1,6 +1,7 @@
 
 import { defineStore } from 'pinia';
 import api from '../services/api';
+import { useAuthStore } from './index'; // Import auth store
 
 export const useProjectsStore = defineStore('projects', {
   state: () => ({
@@ -68,7 +69,12 @@ export const useProjectsStore = defineStore('projects', {
                     'Content-Type': 'multipart/form-data',
                 },
             });
-            await this.fetchProjects(); 
+            await this.fetchProjects();
+            
+            // **FIX: Refresh user permissions after creating a project**
+            const authStore = useAuthStore();
+            await authStore.fetchUser();
+
             return response.data.data;
         } catch (err) {
             this.error = err.response?.data?.message || 'Failed to create project.';
@@ -136,11 +142,14 @@ export const useProjectsStore = defineStore('projects', {
     async fetchProjectMembers(projectId) {
         try {
             const response = await api.get(`/projects/${projectId}/users`);
+            // The API returns a simple array, so we return it directly.
+            const members = response.data || [];
+            
             // In edit mode of project detail, we might want to update the main project object
             if (this.project && this.project.id == projectId) {
-                this.project.users = response.data.data;
+                this.project.users = members;
             }
-            return response.data.data;
+            return members;
         } catch (err) {
             console.error('Failed to fetch project members:', err);
             return [];
@@ -179,6 +188,21 @@ export const useProjectsStore = defineStore('projects', {
             throw err;
         }
     },
+
+    async fetchSprints(projectId) {
+        try {
+            const response = await api.get(`/projects/${projectId}/sprints`);
+            // Assuming the project object in the store should hold its sprints
+            if (this.project && this.project.id == projectId) {
+                this.project.sprints = response.data;
+            }
+            return response.data;
+        } catch (err) {
+            console.error('Failed to fetch sprints:', err);
+            return [];
+        }
+    },
+
     async fetchActiveProjects(page = 1) {
         this.loading = true;
         this.error = null;

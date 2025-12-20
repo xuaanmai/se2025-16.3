@@ -9,15 +9,14 @@ export const useReferentialStore = defineStore('referentials', {
     ticketTypes: [],
     ticketPriorities: [],
     users: [],
-    roles: [],
+    roles: [], // Added roles
     loading: false,
-    loaded: false, // Add a flag to track if data has been loaded
+    isLoaded: false, // Flag to check if data has been fetched
   }),
 
   actions: {
     async fetchAllReferentials() {
-      // Only fetch if data hasn't been loaded yet.
-      if (this.loaded) return;
+      if (this.isLoaded) return; // Don't refetch if already loaded
 
       this.loading = true;
       try {
@@ -29,26 +28,42 @@ export const useReferentialStore = defineStore('referentials', {
           usersRes,
           rolesRes,
         ] = await Promise.all([
-          api.get('/projects', { params: { per_page: -1 } }), // Fetch all projects
+          api.get('/projects', { params: { per_page: -1 } }),
           api.get('/referential/ticket-statuses'),
           api.get('/referential/ticket-types'),
           api.get('/referential/ticket-priorities'),
-          api.get('/users', { params: { per_page: -1 } }), // Fetch all users
-          api.get('/roles'), // Fetch roles
+          api.get('/users', { params: { per_page: -1 } }),
+          api.get('/roles'),
         ]);
 
-        this.projects = projectsRes.data.data;
-        this.ticketStatuses = statusesRes.data;
-        this.ticketTypes = typesRes.data;
-        this.ticketPriorities = prioritiesRes.data;
-        this.users = usersRes.data.data;
-        this.roles = rolesRes.data.data;
+        // Hyper-defensive data handling
+        const projectsData = projectsRes.data?.data || projectsRes.data || [];
+        const statusesData = statusesRes.data?.data || statusesRes.data || [];
+        const typesData = typesRes.data?.data || typesRes.data || [];
+        const prioritiesData = prioritiesRes.data?.data || prioritiesRes.data || [];
+        const usersData = usersRes.data?.data || usersRes.data || [];
+        const rolesData = rolesRes.data?.data || rolesRes.data || [];
 
-        this.loaded = true; // Set the flag to true after successful fetch
+        this.projects = Array.isArray(projectsData) ? projectsData : [];
+        this.ticketStatuses = Array.isArray(statusesData) ? statusesData : [];
+        this.users = Array.isArray(usersData) ? usersData : [];
+        this.roles = Array.isArray(rolesData) ? rolesData : [];
+
+        // Sort Type and Priority alphabetically, ensuring they are arrays
+        this.ticketTypes = (Array.isArray(typesData) ? typesData : []).sort((a, b) => a.name.localeCompare(b.name));
+        this.ticketPriorities = (Array.isArray(prioritiesData) ? prioritiesData : []).sort((a, b) => a.name.localeCompare(b.name));
+
+        this.isLoaded = true;
 
       } catch (error) {
         console.error('Failed to fetch referential data:', error);
-        this.loaded = false; // Reset flag on error to allow retrying
+        // Even on failure, ensure state properties are valid arrays to prevent render errors
+        this.projects = [];
+        this.ticketStatuses = [];
+        this.ticketTypes = [];
+        this.ticketPriorities = [];
+        this.users = [];
+        this.roles = [];
       } finally {
         this.loading = false;
       }

@@ -16,14 +16,6 @@
         <svg class="h-6 w-6 mr-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0l2-2m-2 2l-2-2" /></svg>
         <span>Projects</span>
       </router-link>
-      <router-link :to="{ name: 'KanbanBoard' }" class="flex items-center px-3 py-2 rounded-md text-sm font-medium hover:bg-gray-700" active-class="bg-gray-900">
-        <svg class="h-6 w-6 mr-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 10h16M4 14h16M4 18h16" /></svg>
-        <span>Kanban Board</span>
-      </router-link>
-      <router-link :to="{ name: 'Roadmap' }" class="flex items-center px-3 py-2 rounded-md text-sm font-medium hover:bg-gray-700" active-class="bg-gray-900">
-        <svg class="h-6 w-6 mr-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" /></svg>
-        <span>Roadmap</span>
-      </router-link>
       <router-link :to="{ name: 'MyTasks' }" class="flex items-center px-3 py-2 rounded-md text-sm font-medium hover:bg-gray-700" active-class="bg-gray-900">
         <svg class="h-6 w-6 mr-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" /></svg>
         <span>My Tasks</span>

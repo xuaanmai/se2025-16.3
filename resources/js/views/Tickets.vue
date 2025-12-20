@@ -84,7 +84,7 @@
             <td class="px-5 py-5 border-b border-gray-200 bg-white text-sm">{{ ticket.responsible?.name || 'Unassigned' }}</td>
             <td class="px-5 py-5 border-b border-gray-200 bg-white text-sm text-right">
               <button @click="openEditModal(ticket)" class="text-indigo-600 hover:text-indigo-900 mr-4">Edit</button>
-              <button @click="openDeleteModal(ticket)" class="text-red-600 hover:text-red-900">Delete</button>
+              <button @click="confirmDelete(ticket)" class="text-red-600 hover:text-red-900">Delete</button>
             </td>
           </tr>
           <tr v-if="ticketsStore.tickets.length === 0">
@@ -117,20 +117,10 @@
 
     <!-- Ticket Form Modal -->
     <TicketFormModal 
-      v-if="isFormModalOpen" 
+      v-if="isModalOpen" 
       :ticket="selectedTicket"
-      @close="closeFormModal" 
+      @close="closeModal" 
       @save="handleSave" 
-    />
-
-    <!-- Confirmation Modal -->
-    <ConfirmationModal
-      :show="isDeleteModalOpen"
-      title="Delete Ticket"
-      :message="`Are you sure you want to delete the ticket '${ticketToDelete?.name}'?`"
-      confirm-button-text="Delete"
-      @close="closeDeleteModal"
-      @confirm="handleDelete"
     />
 
   </div>
@@ -141,18 +131,14 @@ import { ref, onMounted, watch } from 'vue';
 import { useTicketsStore } from '@/stores/tickets';
 import { useReferentialStore } from '@/stores/referentials';
 import TicketFormModal from '../components/Tickets/TicketFormModal.vue';
-import ConfirmationModal from '../components/ConfirmationModal.vue';
 import { useAuthStore } from '@/stores';
 
 const ticketsStore = useTicketsStore();
 const referentialStore = useReferentialStore();
 const authStore = useAuthStore();
 
-const isFormModalOpen = ref(false);
+const isModalOpen = ref(false);
 const selectedTicket = ref(null);
-
-const isDeleteModalOpen = ref(false);
-const ticketToDelete = ref(null);
 
 const filters = ref({
   project_id: '',
@@ -176,19 +162,18 @@ const changePage = (page) => {
   }
 };
 
-// Form Modal (Create/Edit)
 const openCreateModal = () => {
   selectedTicket.value = null;
-  isFormModalOpen.value = true;
+  isModalOpen.value = true;
 };
 
 const openEditModal = (ticket) => {
   selectedTicket.value = { ...ticket };
-  isFormModalOpen.value = true;
+  isModalOpen.value = true;
 };
 
-const closeFormModal = () => {
-  isFormModalOpen.value = false;
+const closeModal = () => {
+  isModalOpen.value = false;
   selectedTicket.value = null;
 };
 
@@ -199,25 +184,13 @@ const handleSave = async (ticketData) => {
     await ticketsStore.createTicket(ticketData);
   }
   if (!ticketsStore.error) {
-    closeFormModal();
+    closeModal();
   }
 };
 
-// Delete Modal
-const openDeleteModal = (ticket) => {
-  ticketToDelete.value = ticket;
-  isDeleteModalOpen.value = true;
-};
-
-const closeDeleteModal = () => {
-  isDeleteModalOpen.value = false;
-  ticketToDelete.value = null;
-};
-
-const handleDelete = () => {
-  if (ticketToDelete.value) {
-    ticketsStore.deleteTicket(ticketToDelete.value.id);
+const confirmDelete = (ticket) => {
+  if (window.confirm(`Are you sure you want to delete the ticket "${ticket.name}"?`)) {
+    ticketsStore.deleteTicket(ticket.id);
   }
-  closeDeleteModal();
 };
 </script>
