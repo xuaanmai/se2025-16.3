@@ -31,18 +31,34 @@ class ProjectController extends Controller
             $query->where('status_id', $request->status_id);
         }
 
-        // Pagination
+        // Handle pagination
         $perPage = $request->get('per_page', 15);
-        $projects = $query->paginate($perPage);
+        if ($perPage == -1) {
+            $projects = $query->get();
+        } else {
+            $projects = $query->paginate($perPage);
+        }
 
         return response()->json($projects);
     }
 
     public function show(Project $project)
-    {
-        $project->load(['owner', 'status', 'users', 'tickets', 'statuses', 'sprints', 'epics']);
-        return response()->json($project);
-    }
+        {
+            $project->load([
+                'owner', 
+                'status', 
+                'users',
+                'tickets.status', 
+                'tickets.priority', 
+                'tickets.responsible',
+                'statuses', 
+                'sprints', 
+                'epics'
+            ]);
+
+            return response()->json($project);
+        }
+
 
     public function store(Request $request)
     {
@@ -351,5 +367,4 @@ class ProjectController extends Controller
         return $query->paginate(12);
     }
 }
-
 
