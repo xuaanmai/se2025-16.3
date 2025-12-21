@@ -41,7 +41,7 @@
       </div>
 
       <div v-if="currentTab === 'Roadmap' && project">
-        <GanttChart :project="project" />
+        <GanttChart :project-id="project.id.toString()" />
       </div>
     </div>
 
