@@ -61,6 +61,13 @@ const routes = [
         meta: { title: 'Project Details' },
       },
       {
+        path: 'projects/:id/roadmap',
+        name: 'Roadmap',
+        component: () => import('../views/RoadMap.vue'),
+        props: true,
+        meta: { title: 'Project Roadmap' },
+      },
+      {
         path: 'tickets',
         name: 'Tickets',
         component: () => import('../views/Tickets.vue'),

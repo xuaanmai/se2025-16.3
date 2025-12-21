@@ -86,6 +86,7 @@ const canManage = computed(() => {
 const openCreateModal = () => {
   selectedTicket.value = {
     project_id: props.project.id, // Pre-fill project_id
+    status_id: 1, // Gán mặc định status_id là 1 (thường là "Todo" hoặc "Open")
   };
   isModalOpen.value = true;
 };

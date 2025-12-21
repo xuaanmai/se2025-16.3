@@ -144,10 +144,12 @@ class BoardController extends Controller
                     'id' => $ticket->responsible->id,
                     'name' => $ticket->responsible->name,
                     'avatar' => $ticket->responsible->avatar,
-                ] : null, // Trả về null rõ ràng hoặc object mặc định
-                'status_id' => $ticket->status_id,
+                ] : null,
+                'status' => $ticket->status, // Trả về cả object status
                 'priority' => $ticket->priority,
                 'type' => $ticket->type,
+                'estimation' => $ticket->estimation, // Thêm estimation
+                'epic' => $ticket->epic, // Thêm epic
             ];
         });
 

@@ -58,6 +58,14 @@
               </select>
             </div>
             <div>
+              <label for="ticket-epic" class="block text-sm font-medium text-gray-700">Epic</label>
+              <select id="ticket-epic" v-model="form.epic_id" class="mt-1 form-select" :disabled="!form.project_id || epicsStore.loading">
+                <option value="">None</option>
+                <option v-if="epicsStore.loading" value="">Loading epics...</option>
+                <option v-for="epic in epicsStore.epics" :key="epic.id" :value="epic.id">{{ epic.name }}</option>
+              </select>
+            </div>
+            <div>
               <label for="ticket-estimation" class="block text-sm font-medium text-gray-700">Estimation (hours)</label>
               <input type="number" step="0.5" min="0" id="ticket-estimation" v-model="form.estimation" class="mt-1 form-input" />
             </div>
@@ -103,7 +111,8 @@ import { ref, watch, computed } from 'vue';
 import { useTicketsStore } from '@/stores/tickets';
 import { useProjectsStore } from '@/stores/projects';
 import { useReferentialStore } from '@/stores/referentials';
-import { useAuthStore } from '@/stores'; // Import the auth store
+import { useEpicsStore } from '@/stores/epics'; // Import the new epics store
+import { useAuthStore } from '@/stores';
 
 const props = defineProps({
   ticket: {
@@ -117,7 +126,8 @@ const emit = defineEmits(['close', 'save']);
 const ticketsStore = useTicketsStore();
 const projectsStore = useProjectsStore();
 const referentialStore = useReferentialStore();
-const authStore = useAuthStore(); // Initialize the auth store
+const epicsStore = useEpicsStore(); // Initialize the epics store
+const authStore = useAuthStore();
 
 const form = ref({});
 const projectMembers = ref([]);
@@ -137,12 +147,13 @@ const initializeForm = (ticket) => {
     id: null,
     name: '',
     description: '',
-    project_id: '', // Default to empty, forcing user selection
+    project_id: '',
     owner_id: authStore.user?.id,
     responsible_id: '',
     status_id: '',
     priority_id: referentialStore.ticketPriorities.find(p => p.is_default)?.id || '',
     type_id: referentialStore.ticketTypes.find(t => t.is_default)?.id || '',
+    epic_id: '', // Add epic_id to default values
     estimation: null,
     start_date: '',
     due_date: '',
@@ -159,6 +170,7 @@ const initializeForm = (ticket) => {
       status_id: ticket.status_id,
       priority_id: ticket.priority_id,
       type_id: ticket.type_id,
+      epic_id: ticket.epic_id || '', // Populate epic_id if it exists
       estimation: ticket.estimation,
       start_date: formatDateForInput(ticket.start_date),
       due_date: formatDateForInput(ticket.due_date),
@@ -182,28 +194,29 @@ const groupedMembers = computed(() => {
 });
 
 watch(() => props.ticket, async (newTicket) => {
-  // Ensure referential data is loaded before initializing the form
   if (!referentialStore.isLoaded) {
     await referentialStore.fetchAllReferentials();
   }
-  // DEBUG: Log the statuses available right before form initialization
-  console.log('Statuses available to form:', referentialStore.ticketStatuses);
   initializeForm(newTicket);
 }, { immediate: true });
 
-watch(() => form.value.project_id, async (newProjectId, oldProjectId) => {
+watch(() => form.value.project_id, async (newProjectId) => {
   if (newProjectId) {
+    // Fetch members
     loadingMembers.value = true;
     projectMembers.value = await projectsStore.fetchProjectMembers(newProjectId);
     loadingMembers.value = false;
     
-    // If project changed, check if the current assignee is still in the new project's member list
+    // Fetch epics for the project
+    await epicsStore.fetchEpics(newProjectId);
+
     const isAssigneeInNewProject = Array.isArray(projectMembers.value) && projectMembers.value.some(member => member.id === form.value.responsible_id);
     if (!isAssigneeInNewProject) {
       form.value.responsible_id = '';
     }
   } else {
     projectMembers.value = [];
+    epicsStore.epics = []; // Clear epics if no project is selected
   }
 }, { immediate: true });
 
