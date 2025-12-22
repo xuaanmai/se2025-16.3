@@ -15,9 +15,9 @@
         <div>
           <label for="role-select" class="block text-sm font-medium text-gray-700">Role</label>
           <select id="role-select" v-model="newUser.role" required class="mt-1 form-select">
-            <option>member</option>
-            <option>manager</option>
-            <option>viewer</option>
+            <option v-for="role in roleOptions" :key="role.value" :value="role.value">
+              {{ role.label }}
+            </option>
           </select>
         </div>
         <button type="submit" class="px-4 py-2 text-white bg-blue-600 rounded-md hover:bg-blue-700 h-10">Add Member</button>
@@ -42,12 +42,17 @@
               <p class="text-gray-600">{{ member.email }}</p>
             </td>
             <td class="px-5 py-5 border-b border-gray-200 bg-white text-sm">
-              <select v-if="canManage" v-model="member.pivot.role" @change="updateRole(member.id, $event.target.value)" class="form-select py-1">
-                <option>member</option>
-                <option>manager</option>
-                <option>viewer</option>
+              <select
+                v-if="canManage"
+                v-model="member.pivot.role"
+                @change="updateRole(member.id, $event.target.value)"
+                class="form-select py-1"
+              >
+                <option v-for="role in roleOptions" :key="role.value" :value="role.value">
+                  {{ role.label }}
+                </option>
               </select>
-              <span v-else>{{ member.pivot.role }}</span>
+              <span v-else>{{ getRoleLabel(member.pivot.role) }}</span>
             </td>
             <td v-if="canManage" class="px-5 py-5 border-b border-gray-200 bg-white text-sm text-right">
               <button @click="removeUser(member.id)" class="text-red-600 hover:text-red-900">Remove</button>
@@ -66,7 +71,7 @@
 </style>
 
 <script setup>
-import { ref, computed } from 'vue';
+import { ref, computed, onMounted } from 'vue';
 import { useProjectsStore } from '@/stores/projects';
 import { useReferentialStore } from '@/stores/referentials';
 import { useAuthStore } from '@/stores';
@@ -82,9 +87,16 @@ const projectsStore = useProjectsStore();
 const referentialStore = useReferentialStore();
 const authStore = useAuthStore();
 
+// Backend expects one of: employee, customer, administrator
+const roleOptions = [
+  { value: 'employee', label: 'Member' },
+  { value: 'administrator', label: 'Manager' },
+  { value: 'customer', label: 'Viewer' },
+];
+
 const newUser = ref({
   id: '',
-  role: 'member',
+  role: roleOptions[0].value,
 });
 
 const canManage = computed(() => {
@@ -102,6 +114,10 @@ const availableUsers = computed(() => {
   return referentialStore.users.filter(u => !memberIds.has(u.id));
 });
 
+onMounted(() => {
+  referentialStore.fetchAllReferentials();
+});
+
 const handleAddUser = async () => {
   if (!newUser.value.id) return;
   await projectsStore.attachUser(props.project.id, {
@@ -110,8 +126,13 @@ const handleAddUser = async () => {
   });
   if (!projectsStore.error) {
     newUser.value.id = '';
-    newUser.value.role = 'member';
+    newUser.value.role = roleOptions[0].value;
   }
+};
+
+const getRoleLabel = (value) => {
+  const found = roleOptions.find(r => r.value === value);
+  return found ? found.label : value;
 };
 
 const updateRole = async (userId, role) => {
