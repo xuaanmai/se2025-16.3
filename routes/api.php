@@ -74,7 +74,9 @@ Route::middleware(['web', 'auth'])->group(function () {
     Route::get('/tickets/{ticket}/hours', [TicketController::class, 'getHours']);
     Route::post('/tickets/{ticket}/hours', [TicketController::class, 'logHours']);
     Route::get('/tickets/{ticket}/export-hours', [TicketController::class, 'exportHours']);
-    
+    Route::get('/users/me', [UserController::class, 'me']);
+    Route::put('/users/me', [UserController::class, 'updateMe']);
+
     Route::apiResource('users', UserController::class);
 
     // Referential resources
