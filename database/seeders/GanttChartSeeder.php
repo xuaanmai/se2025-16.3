@@ -29,8 +29,8 @@ class GanttChartSeeder extends Seeder
         $user1 = User::factory()->create();
         $user2 = User::factory()->create();
         $project->users()->attach([
-            $user1->id => ['role' => 'member'],
-            $user2->id => ['role' => 'member'],
+            $user1->id => ['role' => 'employee'],
+            $user2->id => ['role' => 'employee'],
         ]);
 
         // 3. Create Epics with realistic timeframes
