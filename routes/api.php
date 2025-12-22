@@ -50,6 +50,10 @@ Route::middleware(['web', 'auth'])->group(function () {
     Route::get('/dashboard/tickets-by-type', [DashboardController::class, 'ticketsByType']);
     Route::get('/dashboard/ticket-time-logged', [DashboardController::class, 'ticketTimeLogged']);
     Route::get('/dashboard/user-time-logged', [DashboardController::class, 'userTimeLogged']);
+    Route::get('/dashboard/my-tasks-today', [DashboardController::class, 'myTasksToday']);
+    Route::get('/projects/active', [ProjectController::class, 'active']);
+    Route::get('/tickets/open', [TicketController::class, 'open']);
+    Route::get('/tickets/in-progress', [TicketController::class, 'inProgress']);
 
     // Core resources
     Route::apiResource('projects', ProjectController::class);
@@ -62,7 +66,7 @@ Route::middleware(['web', 'auth'])->group(function () {
     Route::delete('/projects/{project}/users/{user}', [ProjectController::class, 'detachUser']);
     Route::get('/projects/{project}/sprints', [ProjectController::class, 'getSprints']);
     Route::get('/projects/{project}/statuses', [ProjectController::class, 'getStatuses']);
-    
+
     Route::apiResource('tickets', TicketController::class);
     Route::get('/tickets/{ticket}/subscribers', [TicketController::class, 'getSubscribers']);
     Route::post('/tickets/{ticket}/subscribers/{user}', [TicketController::class, 'subscribe']);
@@ -70,7 +74,9 @@ Route::middleware(['web', 'auth'])->group(function () {
     Route::get('/tickets/{ticket}/hours', [TicketController::class, 'getHours']);
     Route::post('/tickets/{ticket}/hours', [TicketController::class, 'logHours']);
     Route::get('/tickets/{ticket}/export-hours', [TicketController::class, 'exportHours']);
-    
+    Route::get('/users/me', [UserController::class, 'me']);
+    Route::put('/users/me', [UserController::class, 'updateMe']);
+
     Route::apiResource('users', UserController::class);
 
     // Referential resources
