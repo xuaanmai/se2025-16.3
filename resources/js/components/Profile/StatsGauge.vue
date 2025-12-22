@@ -35,18 +35,26 @@ import { computed } from 'vue';
 const props = defineProps({
   hours: {
     type: Number,
-    required: true,
+    default: 0,
   },
   maxHours: {
     type: Number,
-    default: 100, // A goal or average
-  }
+    default: 100,
+  },
 });
 
-const circumference = 2 * Math.PI * 15.9155; // Radius of the circle path
+const radius = 15.9155;
+const circumference = 2 * Math.PI * radius;
+
+const normalizedHours = computed(() =>
+  Number.isFinite(props.hours) ? props.hours : 0
+);
 
 const strokeOffset = computed(() => {
-  const percentage = Math.min(props.hours / props.maxHours, 1);
+  const percentage = Math.min(
+    normalizedHours.value / props.maxHours,
+    1
+  );
   return circumference * (1 - percentage);
 });
 </script>
