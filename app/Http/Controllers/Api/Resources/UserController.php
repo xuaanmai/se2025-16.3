@@ -6,6 +6,8 @@ use App\Http\Controllers\Controller;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Auth;
+
 
 class UserController extends Controller
 {
@@ -21,9 +23,13 @@ class UserController extends Controller
             });
         }
 
-        // Pagination
+        // Handle pagination
         $perPage = $request->get('per_page', 15);
-        $users = $query->paginate($perPage);
+        if ($perPage == -1) {
+            $users = $query->get();
+        } else {
+            $users = $query->paginate($perPage);
+        }
 
         return response()->json($users);
     }
@@ -85,6 +91,62 @@ class UserController extends Controller
     {
         $user->delete();
         return response()->json(['message' => 'User deleted successfully']);
+    }
+
+    /**
+    * Get current authenticated user
+    */
+    public function me()
+    {
+        $user = Auth::user();
+
+        if (!$user) {
+            return response()->json([
+                'message' => 'Unauthenticated'
+            ], 401);
+        }
+
+        return response()->json([
+            'data' => $user->load('roles')
+        ]);
+    }
+
+    /**
+    * Update current authenticated user profile
+    */
+    public function updateMe(Request $request)
+    {
+        $user = Auth::user();
+
+        $validated = $request->validate([
+            'name' => 'required|string|max:255',
+            'email' => 'required|email|unique:users,email,' . $user->id,
+
+            // password optional
+            'current_password' => 'required_with:password',
+            'password' => 'nullable|string|min:8|confirmed',
+        ]);
+
+        // ✅ nếu đổi password
+        if (!empty($validated['password'])) {
+            if (!Hash::check($validated['current_password'], $user->password)) {
+                return response()->json([
+                    'message' => 'Current password is incorrect'
+                ], 422);
+            }
+
+            $user->password = Hash::make($validated['password']);
+        }
+
+        // update name + email
+        $user->update([
+            'name' => $validated['name'],
+            'email' => $validated['email'],
+        ]);
+
+        return response()->json([
+            'data' => $user->fresh()->load('roles')
+        ]);
     }
 }
 
