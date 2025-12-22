@@ -1,0 +1,36 @@
+version: "3.9"
+
+services:
+  ## Dịch vụ PHP (Laravel)
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: laravel-app
+    working_dir: /var/www/html
+    volumes:
+      - ./:/var/www/html
+    ports:
+      - "8000:8000"
+    environment:
+      APP_ENV: local
+      APP_DEBUG: "true"
+      APP_URL: http://localhost:8000
+    ## Nếu bạn dùng database riêng, cấu hình DB_* trong .env cho phù hợp
+
+  ## Dịch vụ Node/Vue (Vite dev server)
+  vite:
+    image: node:20
+    container_name: vite-dev
+    working_dir: /var/www/html
+    volumes:
+      - ./:/var/www/html
+    command: sh -c "npm install && npm run dev -- --host 0.0.0.0 --port 5173"
+    ports:
+      - "5173:5173"
+    depends_on:
+      - app
+
+## Nếu cần database (MySQL/Postgres) có thể bổ sung thêm service ở đây.
+
+
