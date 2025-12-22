@@ -25,17 +25,26 @@ export const useProjectsStore = defineStore('projects', {
         const params = { page, ...filters };
         const response = await api.get('/projects', { params });
         
-        // Defensive check for response structure
+        // Defensive handling for different pagination structures:
+        // - Laravel API Resource paginator: { data: [...], meta: { current_page, last_page, total, per_page } }
+        // - Laravel LengthAwarePaginator JSON: { data: [...], current_page, last_page, total, per_page, ... }
+        // - Fallback plain array: [...]
         const responseData = response.data || {};
-        const meta = responseData.meta || {};
-        const data = responseData.data || [];
+        const meta = responseData.meta && typeof responseData.meta === 'object'
+          ? responseData.meta
+          : null;
+
+        // Determine the list of projects
+        const data = Array.isArray(responseData)
+          ? responseData
+          : (responseData.data || []);
 
         this.projects = data;
         this.pagination = {
-          currentPage: meta.current_page || 1,
-          totalPages: meta.last_page || 1,
-          total: meta.total || 0,
-          perPage: meta.per_page || 15,
+          currentPage: (meta?.current_page) ?? responseData.current_page ?? 1,
+          totalPages: (meta?.last_page) ?? responseData.last_page ?? 1,
+          total: (meta?.total) ?? responseData.total ?? data.length,
+          perPage: (meta?.per_page) ?? responseData.per_page ?? (data.length || 15),
         };
       } catch (err) {
         this.error = 'Failed to fetch projects.';
