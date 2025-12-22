@@ -1,23 +1,33 @@
-FROM php:8.2-cli
+# Sử dụng fpm để tối ưu hơn cho server, hoặc giữ cli nếu bạn muốn dùng artisan serve
+FROM php:8.2-fpm
 
-## Cài đặt các extension PHP cần thiết cho Laravel
-RUN apt-get update && apt-get install -y \ 
+# Cài đặt các thư viện hệ thống cần thiết cho các extension PHP
+RUN apt-get update && apt-get install -y \
     git \
     unzip \
     libzip-dev \
     libpng-dev \
+    libjpeg62-turbo-dev \
+    libfreetype6-dev \
     libonig-dev \
     libxml2-dev \
     zip \
- && docker-php-ext-install pdo_mysql mbstring exif pcntl bcmath gd \
- && rm -rf /var/lib/apt/lists/*
+    curl \
+    && docker-php-ext-configure gd --with-freetype --with-jpeg \
+    && docker-php-ext-install pdo_mysql mbstring exif pcntl bcmath gd zip
 
+# Cài đặt Composer chính thức từ Docker Hub
+COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
+
+# Thiết lập thư mục làm việc
 WORKDIR /var/www/html
 
-## Mặc định, project sẽ được mount từ host vào container bằng docker-compose
-## nên không cần COPY mã nguồn ở đây cho môi trường dev.
+# Cấp quyền cho user hiện tại (Để tránh lỗi Permission denied trên Linux)
+RUN chown -R www-data:www-data /var/www/html
 
-## Lệnh chạy Laravel dev server
+# Port cho Laravel
+EXPOSE 8000
+
+# Lệnh khởi chạy server
+# Lưu ý: Trên server thật, nên dùng 'php-fpm', nhưng để khớp với flow hiện tại của bạn:
 CMD ["php", "artisan", "serve", "--host=0.0.0.0", "--port=8000"]
-
-
