@@ -23,6 +23,9 @@ export default defineConfig({
     resolve: {
         alias: {
             '@': '/resources/js',
+            'frappe-gantt/dist/frappe-gantt.css': path.resolve(__dirname, 'node_modules/frappe-gantt/dist/frappe-gantt.css'),
+        },
+    },
         },
     },
 });
