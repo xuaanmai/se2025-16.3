@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\TicketStatus;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
+use Illuminate\Support\Facades\Log;
 
 class TicketStatusController extends Controller
 {
@@ -25,11 +26,17 @@ class TicketStatusController extends Controller
 
         $query->orderBy('order');
 
+        $statuses = $query->get();
+
+        Log::info('Fetched Ticket Statuses:', $statuses->toArray());
+
         if ($request->boolean('paginate', false)) {
+            // Note: This part is not hit by the referential store, but kept for other potential uses.
+            // We are returning the unpaginated result for the store.
             return response()->json($query->paginate($request->get('per_page', 15)));
         }
 
-        return response()->json($query->get());
+        return response()->json($statuses);
     }
 
     public function show(TicketStatus $ticketStatus)

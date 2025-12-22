@@ -22,6 +22,9 @@
               Status
             </th>
             <th class="px-5 py-3 border-b-2 border-gray-200 bg-gray-100 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
+              Type
+            </th>
+            <th class="px-5 py-3 border-b-2 border-gray-200 bg-gray-100 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
               Owner
             </th>
             <th class="px-5 py-3 border-b-2 border-gray-200 bg-gray-100 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
@@ -52,6 +55,15 @@
               </span>
             </td>
             <td class="px-5 py-5 border-b border-gray-200 bg-white text-sm">
+              <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full"
+                    :class="{
+                      'bg-blue-100 text-blue-800': project.type === 'scrum',
+                      'bg-purple-100 text-purple-800': project.type === 'kanban'
+                    }">
+                {{ project.type }}
+              </span>
+            </td>
+            <td class="px-5 py-5 border-b border-gray-200 bg-white text-sm">
               {{ project.owner?.name || 'N/A' }}
             </td>
             <td class="px-5 py-5 border-b border-gray-200 bg-white text-sm">
@@ -59,11 +71,11 @@
             </td>
             <td class="px-5 py-5 border-b border-gray-200 bg-white text-sm text-right">
               <button @click="openEditModal(project)" class="text-indigo-600 hover:text-indigo-900 mr-4">Edit</button>
-              <button @click="openDeleteModal(project)" class="text-red-600 hover:text-red-900">Delete</button>
+              <button @click="confirmDelete(project)" class="text-red-600 hover:text-red-900">Delete</button>
             </td>
           </tr>
            <tr v-if="projectsStore.projects.length === 0">
-            <td colspan="5" class="text-center py-10 text-gray-500">No projects found.</td>
+            <td colspan="6" class="text-center py-10 text-gray-500">No projects found.</td>
           </tr>
         </tbody>
       </table>
@@ -92,20 +104,10 @@
 
     <!-- Project Form Modal -->
     <ProjectFormModal 
-      v-if="isFormModalOpen" 
+      v-if="isModalOpen" 
       :project="selectedProject"
-      @close="closeFormModal" 
+      @close="closeModal" 
       @save="handleSave" 
-    />
-
-    <!-- Confirmation Modal -->
-    <ConfirmationModal
-      :show="isDeleteModalOpen"
-      title="Delete Project"
-      :message="`Are you sure you want to delete the project '${projectToDelete?.name}'? This action cannot be undone.`"
-      confirm-button-text="Delete"
-      @close="closeDeleteModal"
-      @confirm="handleDelete"
     />
 
   </div>
@@ -115,15 +117,10 @@
 import { ref, onMounted } from 'vue';
 import { useProjectsStore } from '@/stores/projects';
 import ProjectFormModal from '../components/Projects/ProjectFormModal.vue';
-import ConfirmationModal from '../components/ConfirmationModal.vue';
 
 const projectsStore = useProjectsStore();
-
-const isFormModalOpen = ref(false);
+const isModalOpen = ref(false);
 const selectedProject = ref(null);
-
-const isDeleteModalOpen = ref(false);
-const projectToDelete = ref(null);
 
 onMounted(() => {
   projectsStore.fetchProjects();
@@ -135,48 +132,37 @@ const changePage = (page) => {
   }
 };
 
-// Form Modal (Create/Edit)
 const openCreateModal = () => {
   selectedProject.value = null;
-  isFormModalOpen.value = true;
+  isModalOpen.value = true;
 };
 
 const openEditModal = (project) => {
   selectedProject.value = { ...project };
-  isFormModalOpen.value = true;
+  isModalOpen.value = true;
 };
 
-const closeFormModal = () => {
-  isFormModalOpen.value = false;
+const closeModal = () => {
+  isModalOpen.value = false;
   selectedProject.value = null;
 };
 
 const handleSave = async (payload) => {
   if (payload.id) {
+    // Update
     await projectsStore.updateProject(payload.id, payload.data);
   } else {
+    // Create
     await projectsStore.createProject(payload.data);
   }
   if (!projectsStore.error) {
-    closeFormModal();
+    closeModal();
   }
 };
 
-// Delete Modal
-const openDeleteModal = (project) => {
-  projectToDelete.value = project;
-  isDeleteModalOpen.value = true;
-};
-
-const closeDeleteModal = () => {
-  isDeleteModalOpen.value = false;
-  projectToDelete.value = null;
-};
-
-const handleDelete = () => {
-  if (projectToDelete.value) {
-    projectsStore.deleteProject(projectToDelete.value.id);
+const confirmDelete = (project) => {
+  if (window.confirm(`Are you sure you want to delete the project "${project.name}"?`)) {
+    projectsStore.deleteProject(project.id);
   }
-  closeDeleteModal();
 };
 </script>

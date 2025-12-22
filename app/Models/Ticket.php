@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Models\Project;
 use App\Notifications\TicketCreated;
 use App\Notifications\TicketStatusUpdated;
 use Carbon\CarbonInterval;
@@ -232,5 +233,33 @@ class Ticket extends Model implements HasMedia
         return new Attribute(
             get: fn() => $this->estimationProgress
         );
+    }
+
+    // public function scopeActive($query)
+    // {
+    //     // Thay vì truy vấn trực tiếp cột không tồn tại, ta join với bảng status
+    //     return $query->whereHas('status', function ($q) {
+    //         $q->where('is_closed', false);
+    //     });
+    // }
+
+    // public function scopeClosed($query)
+    // {
+    //     return $query->whereHas('status', function ($q) {
+    //         $q->where('is_closed', true);
+    //     });
+    // }
+
+    public function scopeActive($query) {
+    return $query->whereHas('status', function ($q) {
+        $q->where('is_closed', false); // Cột này nằm ở bảng ticket_statuses
+    });
+}
+
+    public function scopeClosed($query)
+    {
+        return $query->whereHas('status', function ($q) {
+            $q->where('is_closed', true);
+        });
     }
 }

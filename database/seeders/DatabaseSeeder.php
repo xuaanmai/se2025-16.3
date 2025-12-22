@@ -20,5 +20,10 @@ class DatabaseSeeder extends Seeder
         $this->call(TicketPrioritySeeder::class);
         $this->call(TicketStatusSeeder::class);
         $this->call(ActivitySeeder::class);
+
+        if (app()->environment() !== 'production') {
+            $this->call(DemoDataSeeder::class);
+            $this->call(GanttChartSeeder::class);
+        }
     }
 }

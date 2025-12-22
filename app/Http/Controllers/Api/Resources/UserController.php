@@ -21,9 +21,13 @@ class UserController extends Controller
             });
         }
 
-        // Pagination
+        // Handle pagination
         $perPage = $request->get('per_page', 15);
-        $users = $query->paginate($perPage);
+        if ($perPage == -1) {
+            $users = $query->get();
+        } else {
+            $users = $query->paginate($perPage);
+        }
 
         return response()->json($users);
     }

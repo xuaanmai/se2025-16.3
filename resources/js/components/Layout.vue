@@ -4,7 +4,7 @@
     <Sidebar />
 
     <!-- Main content -->
-    <div class="flex-1 flex flex-col overflow-hidden ml-64">
+    <div class="flex-1 flex flex-col ml-64">
       <!-- Header -->
       <Header />
 

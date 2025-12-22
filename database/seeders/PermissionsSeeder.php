@@ -81,6 +81,11 @@ class PermissionsSeeder extends Seeder
         // Add all permissions to Admin role
         $adminRole->syncPermissions(Permission::all()->pluck('name')->toArray());
 
+        // Create other standard roles
+        Role::firstOrCreate(['name' => 'Manager']);
+        Role::firstOrCreate(['name' => 'Developer']);
+        Role::firstOrCreate(['name' => 'Customer']);
+
         // Assign Admin role to john.doe@helper.app user (only this user will be admin)
         $adminUser = User::where('email', 'john.doe@helper.app')->first();
         if ($adminUser) {
