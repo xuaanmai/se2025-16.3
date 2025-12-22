@@ -37,7 +37,7 @@ export const useKanbanStore = defineStore('kanban', {
           title: status.title,
           color: status.color,
           // Dùng status.id để lọc vì Backend trả về status id
-          tasks: tickets.filter(ticket => (ticket.status_id || ticket.status) === status.id)
+          tasks: tickets.filter(ticket => ticket.status && ticket.status.id === status.id)
         }));
 
       } catch (err) {
