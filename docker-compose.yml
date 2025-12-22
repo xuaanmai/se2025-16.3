@@ -1,0 +1,48 @@
+services:
+  # 1. Cơ sở dữ liệu MySQL
+  db:
+    image: mysql:8.0
+    container_name: mysql-db
+    restart: always
+    environment:
+      MYSQL_DATABASE: project_management
+      MYSQL_ROOT_PASSWORD: root@123
+    ports:
+      - "3306:3306"
+    volumes:
+      - db_data:/var/lib/mysql
+
+  # 2. Ứng dụng PHP (Laravel)
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: laravel-app
+    working_dir: /var/www/html
+    depends_on:
+      - db
+    volumes:
+      - ./:/var/www/html
+    ports:
+      - "80:8000"  # Chuyển cổng 80 của server vào 8000 của container (vào web ko cần gõ :8000)
+    environment:
+      APP_ENV: production
+      APP_DEBUG: "false"
+      APP_URL: http://35.202.29.6
+
+  # 3. Dịch vụ Node/Vue (Vite)
+  vite:
+    image: node:20
+    container_name: vite-dev
+    working_dir: /var/www/html
+    volumes:
+      - ./:/var/www/html
+    command: sh -c "npm install && npm run dev -- --host 0.0.0.0 --port 5173"
+    ports:
+      - "5173:5173"
+    depends_on:
+      - app
+
+# Lưu trữ dữ liệu database ổn định
+volumes:
+  db_data:

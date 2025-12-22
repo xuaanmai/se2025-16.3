@@ -22,14 +22,19 @@ use Spatie\Permission\Traits\HasRoles;
 
 class User extends Authenticatable implements MustVerifyEmail, FilamentUser
 {
-    use HasApiTokens, HasFactory, Notifiable, TwoFactorAuthenticatable,
-        HasRoles, HasAvatarUrl, SoftDeletes, MustVerifyNewEmail;
+    use HasApiTokens,
+        HasFactory,
+        Notifiable,
+        TwoFactorAuthenticatable,
+        HasRoles,
+        HasAvatarUrl,
+        SoftDeletes,
+        MustVerifyNewEmail;
 
-    /**
-     * The attributes that are mass assignable.
-     *
-     * @var array<int, string>
-     */
+    protected $appends = [
+        'total_logged_in_hours',
+    ];
+
     protected $fillable = [
         'name',
         'email',
@@ -40,84 +45,75 @@ class User extends Authenticatable implements MustVerifyEmail, FilamentUser
         'email_verified_at',
     ];
 
-    /**
-     * The attributes that should be hidden for serialization.
-     *
-     * @var array<int, string>
-     */
     protected $hidden = [
         'password',
         'remember_token',
     ];
 
-    /**
-     * The attributes that should be cast.
-     *
-     * @var array<string, string>
-     */
     protected $casts = [
         'email_verified_at' => 'datetime',
     ];
 
-    public static function boot()
+    protected static function boot()
     {
         parent::boot();
 
         static::creating(function (User $item) {
-            if ($item->type == 'db') {
+            if ($item->type === 'db') {
                 $item->password = bcrypt(uniqid());
                 $item->creation_token = Uuid::uuid4()->toString();
             }
         });
 
         static::created(function (User $item) {
-            if ($item->type == 'db') {
+            if ($item->type === 'db') {
                 $item->notify(new UserCreatedNotification($item));
             }
         });
     }
 
+    /* ================= RELATIONSHIPS ================= */
+
     public function projectsOwning(): HasMany
     {
-        return $this->hasMany(Project::class, 'owner_id', 'id');
+        return $this->hasMany(Project::class, 'owner_id');
     }
 
     public function projectsAffected(): BelongsToMany
     {
-        return $this->belongsToMany(Project::class, 'project_users', 'user_id', 'project_id')->withPivot(['role']);
+        return $this->belongsToMany(Project::class, 'project_users')
+            ->withPivot(['role']);
     }
 
     public function favoriteProjects(): BelongsToMany
     {
-        return $this->belongsToMany(Project::class, 'project_favorites', 'user_id', 'project_id');
+        return $this->belongsToMany(Project::class, 'project_favorites');
     }
 
     public function ticketsOwned(): HasMany
     {
-        return $this->hasMany(Ticket::class, 'owner_id', 'id');
+        return $this->hasMany(Ticket::class, 'owner_id');
     }
 
     public function ticketsResponsible(): HasMany
     {
-        return $this->hasMany(Ticket::class, 'responsible_id', 'id');
+        return $this->hasMany(Ticket::class, 'responsible_id');
     }
 
     public function socials(): HasMany
     {
-        return $this->hasMany(SocialiteUser::class, 'user_id', 'id');
+        return $this->hasMany(SocialiteUser::class);
     }
 
     public function hours(): HasMany
     {
-        return $this->hasMany(TicketHour::class, 'user_id', 'id');
+        return $this->hasMany(TicketHour::class);
     }
 
     public function totalLoggedInHours(): Attribute
     {
-        return new Attribute(
-            get: function () {
-                return $this->hours->sum('value');
-            }
+        return Attribute::get(
+            fn () => (int) $this->hours()->sum('value')
         );
     }
 
