@@ -25,7 +25,7 @@ class DemoDataSeeder extends Seeder
             'email' => 'manager@planora.app',
             'password' => Hash::make('password'),
         ]);
-        $user->assignRole('Default role');
+        $mainUser->assignRole('Default role');
 
         // 2. Create a pool of other users
         $users = User::factory(10)->create();
