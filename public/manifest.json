@@ -1,0 +1,243 @@
+{
+  "resources/js/app.js": {
+    "file": "assets/app.c4cf1d9c.js",
+    "src": "resources/js/app.js",
+    "isEntry": true,
+    "dynamicImports": [
+      "resources/js/views/Landing.vue",
+      "resources/js/views/Login.vue",
+      "resources/js/views/Dashboard.vue",
+      "resources/js/views/ActiveProjects.vue",
+      "resources/js/views/OpenTickets.vue",
+      "resources/js/views/TicketsInProgress.vue",
+      "resources/js/views/Projects.vue",
+      "resources/js/views/ProjectDetail.vue",
+      "resources/js/views/RoadMap.vue",
+      "resources/js/views/Tickets.vue",
+      "resources/js/views/TicketDetail.vue",
+      "resources/js/views/Users.vue",
+      "resources/js/views/MyTasks.vue",
+      "resources/js/views/UserProfile.vue"
+    ],
+    "css": [
+      "assets/app.28916587.css"
+    ]
+  },
+  "resources/js/views/Landing.vue": {
+    "file": "assets/Landing.10fb1d7e.js",
+    "src": "resources/js/views/Landing.vue",
+    "isDynamicEntry": true,
+    "imports": [
+      "resources/js/app.js"
+    ],
+    "css": [
+      "assets/Landing.5bc3a81a.css"
+    ]
+  },
+  "resources/js/views/Login.vue": {
+    "file": "assets/Login.8d10620b.js",
+    "src": "resources/js/views/Login.vue",
+    "isDynamicEntry": true,
+    "imports": [
+      "resources/js/app.js"
+    ]
+  },
+  "resources/js/views/Dashboard.vue": {
+    "file": "assets/Dashboard.beb43f53.js",
+    "src": "resources/js/views/Dashboard.vue",
+    "isDynamicEntry": true,
+    "imports": [
+      "resources/js/app.js"
+    ]
+  },
+  "resources/js/views/ActiveProjects.vue": {
+    "file": "assets/ActiveProjects.6eedbc1c.js",
+    "src": "resources/js/views/ActiveProjects.vue",
+    "isDynamicEntry": true,
+    "imports": [
+      "resources/js/app.js"
+    ]
+  },
+  "resources/js/views/OpenTickets.vue": {
+    "file": "assets/OpenTickets.78ff0c51.js",
+    "src": "resources/js/views/OpenTickets.vue",
+    "isDynamicEntry": true,
+    "imports": [
+      "resources/js/app.js"
+    ]
+  },
+  "resources/js/views/TicketsInProgress.vue": {
+    "file": "assets/TicketsInProgress.da1b0026.js",
+    "src": "resources/js/views/TicketsInProgress.vue",
+    "isDynamicEntry": true,
+    "imports": [
+      "resources/js/app.js"
+    ]
+  },
+  "resources/js/views/Projects.vue": {
+    "file": "assets/Projects.bff2c782.js",
+    "src": "resources/js/views/Projects.vue",
+    "isDynamicEntry": true,
+    "imports": [
+      "_projects.b5471ceb.js",
+      "resources/js/app.js"
+    ],
+    "css": [
+      "assets/Projects.6d0c2878.css"
+    ]
+  },
+  "_projects.b5471ceb.js": {
+    "file": "assets/projects.b5471ceb.js",
+    "imports": [
+      "resources/js/app.js"
+    ]
+  },
+  "resources/js/views/ProjectDetail.vue": {
+    "file": "assets/ProjectDetail.322d7a49.js",
+    "src": "resources/js/views/ProjectDetail.vue",
+    "isDynamicEntry": true,
+    "imports": [
+      "resources/js/app.js",
+      "_projects.b5471ceb.js",
+      "_referentials.d9e3f896.js",
+      "_tickets.575eee5f.js",
+      "_TicketFormModal.858d24ef.js",
+      "_GanttChart.f97c6af2.js"
+    ],
+    "css": [
+      "assets/ProjectDetail.5e3a6c47.css"
+    ]
+  },
+  "_GanttChart.f97c6af2.js": {
+    "file": "assets/GanttChart.f97c6af2.js",
+    "imports": [
+      "resources/js/app.js"
+    ],
+    "css": [
+      "assets/GanttChart.f614cbbd.css"
+    ]
+  },
+  "_referentials.d9e3f896.js": {
+    "file": "assets/referentials.d9e3f896.js",
+    "imports": [
+      "resources/js/app.js"
+    ]
+  },
+  "_tickets.575eee5f.js": {
+    "file": "assets/tickets.575eee5f.js",
+    "imports": [
+      "resources/js/app.js"
+    ]
+  },
+  "_TicketFormModal.858d24ef.js": {
+    "file": "assets/TicketFormModal.858d24ef.js",
+    "imports": [
+      "resources/js/app.js",
+      "_tickets.575eee5f.js",
+      "_projects.b5471ceb.js",
+      "_referentials.d9e3f896.js"
+    ],
+    "css": [
+      "assets/TicketFormModal.075caa87.css"
+    ]
+  },
+  "resources/js/views/RoadMap.vue": {
+    "file": "assets/RoadMap.8d965a62.js",
+    "src": "resources/js/views/RoadMap.vue",
+    "isDynamicEntry": true,
+    "imports": [
+      "_GanttChart.f97c6af2.js",
+      "resources/js/app.js"
+    ]
+  },
+  "resources/js/views/Tickets.vue": {
+    "file": "assets/Tickets.08561a51.js",
+    "src": "resources/js/views/Tickets.vue",
+    "isDynamicEntry": true,
+    "imports": [
+      "resources/js/app.js",
+      "_tickets.575eee5f.js",
+      "_referentials.d9e3f896.js",
+      "_TicketFormModal.858d24ef.js",
+      "_projects.b5471ceb.js"
+    ]
+  },
+  "resources/js/views/TicketDetail.vue": {
+    "file": "assets/TicketDetail.9c9d01a9.js",
+    "src": "resources/js/views/TicketDetail.vue",
+    "isDynamicEntry": true,
+    "imports": [
+      "_tickets.575eee5f.js",
+      "resources/js/app.js",
+      "_referentials.d9e3f896.js"
+    ],
+    "css": [
+      "assets/TicketDetail.6974b58d.css"
+    ]
+  },
+  "resources/js/views/Users.vue": {
+    "file": "assets/Users.c5a8ef9e.js",
+    "src": "resources/js/views/Users.vue",
+    "isDynamicEntry": true,
+    "imports": [
+      "resources/js/app.js",
+      "_referentials.d9e3f896.js"
+    ]
+  },
+  "resources/js/views/MyTasks.vue": {
+    "file": "assets/MyTasks.24ce17a0.js",
+    "src": "resources/js/views/MyTasks.vue",
+    "isDynamicEntry": true,
+    "imports": [
+      "resources/js/app.js"
+    ]
+  },
+  "resources/js/views/UserProfile.vue": {
+    "file": "assets/UserProfile.cc83c45f.js",
+    "src": "resources/js/views/UserProfile.vue",
+    "isDynamicEntry": true,
+    "imports": [
+      "resources/js/app.js"
+    ],
+    "css": [
+      "assets/UserProfile.77599753.css"
+    ]
+  },
+  "resources/css/app.css": {
+    "file": "assets/app.31edf675.css",
+    "src": "resources/css/app.css",
+    "isEntry": true
+  },
+  "GanttChart.css": {
+    "file": "assets/GanttChart.f614cbbd.css",
+    "src": "GanttChart.css"
+  },
+  "resources/js/views/Landing.css": {
+    "file": "assets/Landing.5bc3a81a.css",
+    "src": "resources/js/views/Landing.css"
+  },
+  "TicketFormModal.css": {
+    "file": "assets/TicketFormModal.075caa87.css",
+    "src": "TicketFormModal.css"
+  },
+  "resources/js/views/Projects.css": {
+    "file": "assets/Projects.6d0c2878.css",
+    "src": "resources/js/views/Projects.css"
+  },
+  "resources/js/views/UserProfile.css": {
+    "file": "assets/UserProfile.77599753.css",
+    "src": "resources/js/views/UserProfile.css"
+  },
+  "resources/js/views/TicketDetail.css": {
+    "file": "assets/TicketDetail.6974b58d.css",
+    "src": "resources/js/views/TicketDetail.css"
+  },
+  "resources/js/views/ProjectDetail.css": {
+    "file": "assets/ProjectDetail.5e3a6c47.css",
+    "src": "resources/js/views/ProjectDetail.css"
+  },
+  "resources/js/app.css": {
+    "file": "assets/app.28916587.css",
+    "src": "resources/js/app.css"
+  }
+}
