@@ -1,1 +1,0 @@
-import{_ as t}from"./GanttChart.f97c6af2.js";import{o as r,c as o,d as a}from"./app.c4cf1d9c.js";const c={class:"p-4"},n={__name:"RoadMap",props:{id:{type:String,required:!0}},setup(e){return(s,i)=>(r(),o("div",c,[a(t,{"project-id":e.id},null,8,["project-id"])]))}};export{n as default};
