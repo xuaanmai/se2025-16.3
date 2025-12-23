@@ -55,7 +55,7 @@ export const useTicketsStore = defineStore('tickets', {
       this.ticket = null;
       try {
         const response = await api.get(`/tickets/${id}`);
-        this.ticket = response.data.data;
+        this.ticket = response.data;
       } catch (err) {
         this.error = 'Failed to fetch ticket details.';
         console.error(err);
@@ -80,39 +80,61 @@ export const useTicketsStore = defineStore('tickets', {
         }
     },
 
-    async updateTicket(id, ticketData) {
-        this.loading = true;
-        this.error = null;
-        try {
-            const response = await api.put(`/tickets/${id}`, ticketData);
-            await this.fetchTickets(this.pagination.currentPage);
-            if (this.ticket && this.ticket.id === id) {
-                this.ticket = response.data.data;
-            }
-            return response.data.data;
-        } catch (err) {
-            this.error = err.response?.data?.message || 'Failed to update ticket.';
-            console.error(err);
-            throw err;
-        } finally {
-            this.loading = false;
-        }
-    },
+async updateTicket(id, ticketData) {
+  this.loading = true
+  this.error = null
 
-     async deleteTicket(id) {
-        this.loading = true;
-        this.error = null;
-        try {
-            await api.delete(`/tickets/${id}`);
-            await this.fetchTickets(this.pagination.currentPage);
-        } catch (err) {
-            this.error = 'Failed to delete ticket.';
-            console.error(err);
-            throw err;
-        } finally {
-            this.loading = false;
-        }
-    },
+  try {
+    await api.put(`/tickets/${id}`, ticketData)
+
+    // refresh list
+    await this.fetchTickets(this.pagination.currentPage)
+
+    // 🔥 QUAN TRỌNG: refresh ticket đang xem
+    if (this.ticket && this.ticket.id === id) {
+      await this.fetchTicket(id)
+    }
+
+  } catch (err) {
+    this.error = err.response?.data?.message || 'Failed to update ticket.'
+    console.error(err)
+    throw err
+  } finally {
+    this.loading = false
+  }
+},
+
+async deleteTicket(id) {
+  this.loading = true;
+  this.error = null;
+
+  try {
+    const response = await api.delete(`/tickets/${id}`);
+    
+    // Nếu status 200 hoặc 204 → thành công
+    if ([200, 204].includes(response.status)) {
+      this.tickets = this.tickets.filter(t => t.id !== id);
+    } else {
+      // status khác → vẫn remove khỏi list nhưng báo warning
+      console.warn(`Delete returned status ${response.status}, removed from list.`);
+      this.tickets = this.tickets.filter(t => t.id !== id);
+    }
+
+  } catch (err) {
+    // Nếu 404 → coi như đã xóa
+    if (err.response?.status === 404) {
+      console.warn(`Ticket ${id} not found, removed from list.`);
+      this.tickets = this.tickets.filter(t => t.id !== id);
+    } else {
+      // Các lỗi khác → log nhưng không throw nữa
+      console.error('Failed to delete ticket, but removed from list:', err);
+      this.tickets = this.tickets.filter(t => t.id !== id);
+      // Không gán this.error → UI không báo failed
+    }
+  } finally {
+    this.loading = false;
+  }
+},
 
     async fetchComments(ticketId) {
         try {

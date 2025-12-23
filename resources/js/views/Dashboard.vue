@@ -9,22 +9,20 @@
     <!-- Dashboard Content -->
     <div v-else>
       <!-- Stat Cards -->
-      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
-        <StatCard title="Active Projects" :value="dashboardStore.stats?.active_projects" icon="collection" to="/projects/active"/>
-        <StatCard title="Open Tickets" :value="dashboardStore.stats?.open_tickets" icon="ticket" to="/tickets/open"/>
-        <StatCard title="Tickets In Progress" :value="dashboardStore.stats?.in_progress_tickets" icon="fire" to="/tickets/in-progress"/>
-        <StatCard title="Total Users" :value="dashboardStore.stats?.total_users" icon="users" />
+      <div class="flex justify-center mb-6">
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <StatCard title="Active Projects" :value="dashboardStore.stats?.active_projects" icon="collection" to="/projects/active"/>
+          <StatCard title="Open Tickets" :value="dashboardStore.stats?.open_tickets" icon="ticket" to="/tickets/open"/>
+          <StatCard title="Tickets In Progress" :value="dashboardStore.stats?.in_progress_tickets" icon="fire" to="/tickets/in-progress"/>
+        </div>
       </div>
 
       <!-- Main 2-Column Grid -->
       <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        
         <!-- Main Column (2/3) -->
         <div class="lg:col-span-2 space-y-6">
-        <!-- My Tasks Today -->
-          <MyTasksToday
-            :tasks="dashboardStore.myTasksToday"
-          />
+          <!-- My Tasks Today -->
+          <MyTasksToday :tasks="dashboardStore.myTasksToday" />
           <ActivityTimeline :activities="dashboardStore.latestActivities" />
         </div>
 
@@ -34,11 +32,11 @@
           <StatusPieChart :chart-data="dashboardStore.ticketsByType" title="Tickets by Type" />
           <WorkloadList :workload-data="dashboardStore.userTimeLogged" />
         </div>
-
       </div>
     </div>
   </div>
 </template>
+
 
 <script setup>
 import { onMounted } from 'vue';

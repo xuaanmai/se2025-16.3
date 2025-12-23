@@ -1,8 +1,25 @@
-# Sử dụng fpm để tối ưu hơn cho server, hoặc giữ cli nếu bạn muốn dùng artisan serve
-# Đổi từ 8.2 sang 8.4
-FROM php:8.4-fpm
+# Multi-stage build cho production
+# Stage 1: Build assets với Node.js
+FROM node:20-alpine AS node-builder
 
-# Giữ nguyên các phần cài đặt extension bên dưới
+WORKDIR /var/www/html
+
+# Copy package files
+COPY package*.json ./
+
+# Install dependencies (cần devDependencies để build)
+RUN npm ci
+
+# Copy source files cho build
+COPY . .
+
+# Build assets cho production
+RUN npm run build
+
+# Stage 2: PHP-FPM application
+FROM php:8.2-fpm
+
+# Install system dependencies và PHP extensions
 RUN apt-get update && apt-get install -y \
     git \
     unzip \
@@ -15,17 +32,41 @@ RUN apt-get update && apt-get install -y \
     zip \
     curl \
     && docker-php-ext-configure gd --with-freetype --with-jpeg \
-    && docker-php-ext-install pdo_mysql mbstring exif pcntl bcmath gd zip
+    && docker-php-ext-install pdo_mysql mbstring exif pcntl bcmath gd zip opcache \
+    && apt-get clean && rm -rf /var/lib/apt/lists/*
 
+# Install Composer
 COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 
+# Copy built assets từ node-builder
+COPY --from=node-builder /var/www/html/public/build /var/www/html/public/build
+
+# Set working directory
 WORKDIR /var/www/html
-# Cấp quyền cho user hiện tại (Để tránh lỗi Permission denied trên Linux)
-RUN chown -R www-data:www-data /var/www/html
 
-# Port cho Laravel
-EXPOSE 8000
+# Copy application files
+COPY . .
 
-# Lệnh khởi chạy server
-# Lưu ý: Trên server thật, nên dùng 'php-fpm', nhưng để khớp với flow hiện tại của bạn:
-CMD ["php", "artisan", "serve", "--host=0.0.0.0", "--port=8000"]
+# Install PHP dependencies (không cần dev dependencies)
+RUN composer install --no-dev --optimize-autoloader --no-interaction --prefer-dist
+
+# Set proper permissions
+RUN chown -R www-data:www-data /var/www/html \
+    && chmod -R 755 /var/www/html/storage \
+    && chmod -R 755 /var/www/html/bootstrap/cache
+
+# Copy entrypoint script
+COPY docker/docker-entrypoint.sh /usr/local/bin/
+RUN chmod +x /usr/local/bin/docker-entrypoint.sh
+
+# Copy PHP-FPM configuration
+COPY docker/php-fpm.conf /usr/local/etc/php-fpm.d/www.conf
+
+# Copy OPcache configuration
+COPY docker/opcache.ini /usr/local/etc/php/conf.d/opcache.ini
+
+# Expose port 9000 cho PHP-FPM
+EXPOSE 9000
+
+# Use entrypoint script
+ENTRYPOINT ["docker-entrypoint.sh"]

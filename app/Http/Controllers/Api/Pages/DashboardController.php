@@ -368,39 +368,44 @@ class DashboardController extends Controller
         ]);
     }
 
-    /**
-     * Get my tasks today
-     */
-    public function myTasksToday()
-    {
-        $user = auth()->user();
-        if (!$user) {
-            return response()->json([]);
-        }
-        $today = Carbon::today();
-
-        $tasks = Ticket::with(['project', 'status', 'priority'])
-            ->where('responsible_id', $user->id)
-            ->whereDate('due_date', $today)
-            ->whereHas('status', function ($q) {
-                $q->where('is_closed', false);
-            })
-            ->orderByDesc('priority_id')
-            ->limit(10)
-            ->get()
-            ->map(function ($ticket) {
-                return [
-                    'id' => $ticket->id,
-                    'title' => $ticket->name, // Corrected from 'title' to 'name'
-                    'project' => $ticket->project?->name,
-                    'status' => $ticket->status?->name,
-                    'priority' => $ticket->priority?->name,
-                    'due_date' => optional($ticket->due_date)->toDateString(),
-                ];
-            });
-
-        return response()->json($tasks);
+public function myTasksToday()
+{
+    $user = auth()->user();
+    if (!$user) {
+        return response()->json([]);
     }
+
+    $today = Carbon::today();
+    $threeDaysLater = Carbon::today()->addDays(3);
+
+    $tasks = Ticket::with(['project', 'status', 'priority'])
+        ->where('responsible_id', $user->id)
+        ->whereDate('due_date', '>=', $today)
+        ->whereDate('due_date', '<=', $threeDaysLater)
+        ->whereHas('status', function ($q) {
+            $q->where('is_closed', false);
+        })
+        ->orderByDesc('priority_id')
+        ->limit(10)
+        ->get()
+        ->map(function ($ticket) {
+            return [
+                'id' => $ticket->id,
+                'title' => $ticket->name,
+                'project' => [
+                    'id' => $ticket->project?->id,
+                    'name' => $ticket->project?->name,
+                ],
+                'status' => $ticket->status?->name,
+                'priority' => $ticket->priority?->name,
+                'due_date' => optional($ticket->due_date)?->toDateString(),
+                'is_overdue' => $ticket->due_date < Carbon::today(),
+                'is_due_today' => $ticket->due_date == Carbon::today(),
+            ];
+        });
+
+    return response()->json($tasks);
+}
 }
 
 
