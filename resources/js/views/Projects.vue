@@ -70,8 +70,20 @@
               {{ new Date(project.created_at).toLocaleDateString() }}
             </td>
             <td class="px-5 py-5 border-b border-gray-200 bg-white text-sm text-right">
-              <button @click="openEditModal(project)" class="text-indigo-600 hover:text-indigo-900 mr-4">Edit</button>
-              <button @click="confirmDelete(project)" class="text-red-600 hover:text-red-900">Delete</button>
+              <button
+                v-if="canManageProject(project)"
+                @click="openEditModal(project)"
+                class="text-indigo-600 hover:text-indigo-900 mr-4"
+              >
+                Edit
+              </button>
+              <button
+                v-if="canManageProject(project)"
+                @click="confirmDelete(project)"
+                class="text-red-600 hover:text-red-900"
+              >
+                Delete
+              </button>
             </td>
           </tr>
            <tr v-if="projectsStore.projects.length === 0">
@@ -146,12 +158,24 @@ const changePage = async (page) => {
   }
 };
 
+const canManageProject = (project) => {
+  const user = authStore.user;
+  if (!user || !project) return false;
+  if (project.owner_id === user.id) return true;
+  if (!project.users || !Array.isArray(project.users)) return false;
+  return project.users.some(
+    (u) => u.id === user.id && u.pivot?.role === 'administrator'
+  );
+};
+
+
 const openCreateModal = () => {
   selectedProject.value = null;
   isModalOpen.value = true;
 };
 
 const openEditModal = (project) => {
+  if (!canManageProject(project)) return;
   selectedProject.value = { ...project };
   isModalOpen.value = true;
 };
@@ -175,6 +199,7 @@ const handleSave = async (payload) => {
 };
 
 const confirmDelete = (project) => {
+  if (!canManageProject(project)) return;
   if (window.confirm(`Are you sure you want to delete the project "${project.name}"?`)) {
     projectsStore.deleteProject(project.id).then(() => {
       filterUserProjects();
