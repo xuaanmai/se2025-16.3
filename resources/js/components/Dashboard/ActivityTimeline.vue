@@ -44,26 +44,14 @@
                 v-html="activity.description"
               ></p>
 
-              <!-- Task -->
-              <p
-                class="text-xs"
-                :class="!activity.ticket ? 'italic text-gray-400' : ''"
-              >
-                <span class="font-medium">Task:</span>
-                <span class="text-blue-600">
-                  {{ activity.ticket?.name || '[Deleted Task]' }}
-                </span>
-              </p>
-
               <!-- Project -->
               <p
-                class="text-xs"
-                :class="!activity.ticket?.project ? 'italic text-gray-400' : ''"
-                v-if="activity.ticket"
+                v-if="activity.ticket?.project"
+                class="text-xs text-gray-500"
               >
                 <span class="font-medium">Project:</span>
                 <span class="text-blue-600">
-                  {{ activity.ticket?.project?.name || '[Deleted Project]' }}
+                  {{ activity.ticket.project.name }}
                 </span>
               </p>
 
@@ -114,7 +102,9 @@ const props = defineProps({
   },
 })
 
-// Format HH:mm
+/**
+ * Format time to HH:mm
+ */
 const formatTime = (dateString) => {
   const date = new Date(dateString)
   return date.toLocaleTimeString([], {
@@ -123,6 +113,10 @@ const formatTime = (dateString) => {
   })
 }
 
+/**
+ * Group activities by date (Today / Yesterday / Date)
+ * and keep correct order
+ */
 const groupedActivities = computed(() => {
   const today = new Date()
   const yesterday = new Date()
@@ -130,12 +124,7 @@ const groupedActivities = computed(() => {
 
   const groups = {}
 
-  // Lọc bỏ activity mà ticket hoặc project bị xóa
-  const validActivities = props.activities.filter(
-    activity => activity.ticket && activity.ticket.project
-  )
-
-  validActivities.forEach((activity) => {
+  props.activities.forEach((activity) => {
     const activityDate = new Date(activity.created_at)
     let key
     let order
@@ -143,7 +132,9 @@ const groupedActivities = computed(() => {
     if (activityDate.toDateString() === today.toDateString()) {
       key = 'Today'
       order = 0
-    } else if (activityDate.toDateString() === yesterday.toDateString()) {
+    } else if (
+      activityDate.toDateString() === yesterday.toDateString()
+    ) {
       key = 'Yesterday'
       order = 1
     } else {
@@ -171,9 +162,9 @@ const groupedActivities = computed(() => {
     .map((group) => ({
       ...group,
       activities: group.activities.sort(
-        (a, b) => new Date(b.created_at) - new Date(a.created_at)
+        (a, b) =>
+          new Date(b.created_at) - new Date(a.created_at)
       ),
     }))
 })
-
 </script>

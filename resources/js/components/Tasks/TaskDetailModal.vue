@@ -89,6 +89,7 @@
 </template>
 
 <script setup>
+import { computed } from 'vue';
 import SubtaskList from './SubtaskList.vue';
 import AttachmentList from './AttachmentList.vue';
 import CommentSection from './CommentSection.vue';

@@ -7,7 +7,6 @@ export const useProjectsStore = defineStore('projects', {
   state: () => ({
     projects: [],
     project: null,
-    shortcutProjects: JSON.parse(localStorage.getItem('shortcutProjects') || '[]'), // <-- khởi tạo
     pagination: {
       currentPage: 1,
       totalPages: 1,
@@ -213,91 +212,6 @@ export const useProjectsStore = defineStore('projects', {
         }
     },
 
-    async createSprint(projectId, sprintData) {
-        this.error = null; // Clear previous errors
-        try {
-            const response = await api.post('/sprints', {
-                ...sprintData,
-                project_id: projectId,
-            });
-            await this.fetchSprints(projectId); // Refresh sprints list
-            return response.data;
-        } catch (err) {
-            console.error('Failed to create sprint:', err);
-            const errorMessage = err.response?.data?.message || err.response?.data?.errors || 'Failed to create sprint.';
-            this.error = errorMessage;
-            throw err;
-        }
-    },
-
-    async updateSprint(sprintId, sprintData) {
-        this.error = null; // Clear previous errors
-        try {
-            const response = await api.put(`/sprints/${sprintId}`, sprintData);
-            // Refresh sprints for the project
-            if (this.project) {
-                await this.fetchSprints(this.project.id);
-            }
-            return response.data;
-        } catch (err) {
-            console.error('Failed to update sprint:', err);
-            const errorMessage = err.response?.data?.message || err.response?.data?.errors || 'Failed to update sprint.';
-            this.error = errorMessage;
-            throw err;
-        }
-    },
-
-    async deleteSprint(sprintId, projectId) {
-        try {
-            await api.delete(`/sprints/${sprintId}`);
-            await this.fetchSprints(projectId); // Refresh sprints list
-        } catch (err) {
-            console.error('Failed to delete sprint:', err);
-            this.error = err.response?.data?.message || 'Failed to delete sprint.';
-            throw err;
-        }
-    },
-
-    async startSprint(sprintId, projectId) {
-        try {
-            const response = await api.post(`/sprints/${sprintId}/start`);
-            await this.fetchSprints(projectId); // Refresh sprints list
-            return response.data;
-        } catch (err) {
-            console.error('Failed to start sprint:', err);
-            this.error = err.response?.data?.message || 'Failed to start sprint.';
-            throw err;
-        }
-    },
-
-    async stopSprint(sprintId, projectId) {
-        try {
-            const response = await api.post(`/sprints/${sprintId}/stop`);
-            await this.fetchSprints(projectId); // Refresh sprints list
-            return response.data;
-        } catch (err) {
-            console.error('Failed to stop sprint:', err);
-            this.error = err.response?.data?.message || 'Failed to stop sprint.';
-            throw err;
-        }
-    },
-
-    async associateTicketsToSprint(sprintId, projectId, ticketIds) {
-        this.error = null; // Clear previous errors
-        try {
-            const response = await api.post(`/sprints/${sprintId}/tickets`, {
-                ticket_ids: ticketIds,
-            });
-            await this.fetchSprints(projectId); // Refresh sprints list
-            return response.data;
-        } catch (err) {
-            console.error('Failed to associate tickets to sprint:', err);
-            const errorMessage = err.response?.data?.message || err.response?.data?.errors || 'Failed to associate tickets to sprint.';
-            this.error = errorMessage;
-            throw err;
-        }
-    },
-
     async fetchActiveProjects(page = 1) {
         this.loading = true;
         this.error = null;
@@ -313,30 +227,6 @@ export const useProjectsStore = defineStore('projects', {
         } finally {
             this.loading = false;
         }
-    },
-      
-  // Thêm project vào shortcut
-    addShortcut(project) {
-      if (!this.shortcutProjects.find(p => p.id === project.id)) {
-        this.shortcutProjects.push(project);
-        this.saveShortcutsToLocal();
-      }
-    },
-
-    // Xóa project khỏi shortcut
-    removeShortcut(projectId) {
-      this.shortcutProjects = this.shortcutProjects.filter(p => p.id !== projectId);
-      this.saveShortcutsToLocal();
-    },
-
-    // Lưu shortcut vào localStorage
-    saveShortcutsToLocal() {
-      localStorage.setItem('shortcutProjects', JSON.stringify(this.shortcutProjects));
-    },
-
-    // Tải shortcut từ localStorage (nếu muốn refresh thủ công)
-    loadShortcutsFromLocal() {
-      this.shortcutProjects = JSON.parse(localStorage.getItem('shortcutProjects') || '[]');
     },
   },
 });

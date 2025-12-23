@@ -60,6 +60,11 @@
             <label for="description" class="block text-sm font-medium text-gray-700">Description</label>
             <textarea id="description" v-model="form.description" rows="3" class="mt-1 form-input"></textarea>
           </div>
+          
+          <div>
+            <label for="cover_image" class="block text-sm font-medium text-gray-700">Cover Image</label>
+            <input type="file" id="cover_image" @change="handleFileUpload" class="mt-1 block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"/>
+          </div>
 
           <div class="items-center pt-4">
             <button type="submit" :disabled="projectsStore.loading"
@@ -105,6 +110,7 @@ const form = ref({
   ticket_prefix: '',
   type: 'kanban', // Default to kanban
   status_type: 'default', // Default to default statuses
+  cover_image: null,
 });
 
 const formTitle = computed(() => (props.project ? 'Edit Project' : 'Create New Project'));
@@ -121,6 +127,7 @@ watch(
         ticket_prefix: newProject.ticket_prefix,
         type: newProject.type,
         status_type: newProject.status_type || 'basic',
+        cover_image: null,
       };
     } else {
       form.value = {
@@ -130,6 +137,7 @@ watch(
         ticket_prefix: '',
         type: 'kanban',
         status_type: 'basic',
+        cover_image: null,
       };
     }
     projectsStore.error = null;
@@ -148,6 +156,10 @@ watch(() => form.value.name, (newName) => {
       .substring(0, 5);
   }
 });
+
+const handleFileUpload = (event) => {
+  form.value.cover_image = event.target.files[0];
+};
 
 const submitForm = () => {
   // Use FormData to handle file uploads
