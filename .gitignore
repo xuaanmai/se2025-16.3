@@ -13,3 +13,4 @@ yarn-error.log
 /temp-repo
 commit_message.txt
 docs/JsonProject.txt
+bootstrap/cache/*.php

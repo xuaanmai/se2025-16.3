@@ -1,6 +1,8 @@
 import './bootstrap';
 import '../css/app.css';
 import 'frappe-gantt/dist/frappe-gantt.css';
+import Gantt from 'frappe-gantt'; 
+window.Gantt = Gantt; // Make Gantt globally accessible
 
 import { createApp } from 'vue';
 import { createPinia } from 'pinia';

@@ -2,100 +2,86 @@
 
 namespace Database\Seeders;
 
-use App\Models\Epic;
 use App\Models\Project;
 use App\Models\Ticket;
+use App\Models\TicketPriority;
+use App\Models\TicketStatus;
 use App\Models\User;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\Hash;
 
 class GanttChartSeeder extends Seeder
 {
-    /**
-     * Run the database seeds.
-     *
-     * @return void
-     */
     public function run()
     {
-        // 1. Create a dedicated Scrum project for Gantt testing
+        $mainUser = User::factory()->create([
+            'name' => 'Manager User',
+            'email' => 'manager@planora.app',
+            'password' => Hash::make('password'),
+        ]);
+        $mainUser->assignRole('Manager');
+        
+        // 1. Create target project
         $project = Project::factory()->create([
-            'name' => 'Project Roadmap (Gantt)',
+            'name' => 'PLANORA Management System v2.0',
             'type' => 'scrum',
-            'ticket_prefix' => 'GNT',
+            'ticket_prefix' => 'PLN',
         ]);
 
-        // 2. Create a couple of users and attach them with a role
-        $user1 = User::factory()->create();
-        $user2 = User::factory()->create();
-        $project->users()->attach([
-            $user1->id => ['role' => 'employee'],
-            $user2->id => ['role' => 'employee'],
-        ]);
+        // 2. Create a diverse team (4 Developers)
+        $devs = collect(['Le Nam', 'Tran Hung', 'Nguyen Lan', 'Pham Minh'])
+            ->map(function ($name) use ($project) {
+                $user = User::factory()->create(['name' => $name]);
+                $project->users()->attach($user->id, ['role' => 'member']);
+                return $user;
+            });
 
-        // 3. Create Epics with realistic timeframes
-        $epic1 = Epic::factory()->create([
-            'project_id' => $project->id,
-            'name' => 'Q1 - Foundation & Authentication',
-            'starts_at' => Carbon::now()->startOfQuarter(),
-            'ends_at' => Carbon::now()->startOfQuarter()->addWeeks(5),
-        ]);
+        // 3. Realistic task list (Task name, start offset (days), duration (days))
+        $taskDefinitions = [
+            ['Set up Cloud Server infrastructure', -5, 10],
+            ['Analyze system requirements', -3, 7],
+            ['Design detailed Database Schema', 0, 5],
+            ['Build Authentication Module', 2, 8],
+            ['Develop API for Roadmap', 5, 12],
+            ['Integrate Frappe Gantt library', 8, 6],
+            ['Design Dashboard UI', 10, 10],
+            ['Implement multilingual logic (i18n)', 15, 7],
+            ['Test CSRF/Auth security', 18, 5],
+            ['Write API documentation', 20, 10],
+            ['Optimize SQL query performance', 22, 6],
+            ['Fix mobile UI bugs', 25, 4],
+            ['Deploy internal Beta Test', 28, 14],
+            ['Package source code (Release)', 40, 3],
+        ];
 
-        $epic2 = Epic::factory()->create([
-            'project_id' => $project->id,
-            'name' => 'Q1 - Core Feature Development',
-            'starts_at' => Carbon::now()->startOfQuarter()->addWeeks(4),
-            'ends_at' => Carbon::now()->startOfQuarter()->addWeeks(10),
-        ]);
+        // Get Status and Priority IDs for random assignment
+        $statusIds = TicketStatus::pluck('id')->toArray();
+        $priorityIds = TicketPriority::pluck('id')->toArray();
 
-        $epic3 = Epic::factory()->create([
-            'project_id' => $project->id,
-            'name' => 'Q2 - Refinement & Beta Testing',
-            'starts_at' => Carbon::now()->startOfQuarter()->addWeeks(10),
-            'ends_at' => Carbon::now()->endOfQuarter(),
-        ]);
+        foreach ($taskDefinitions as $index => $data) {
+            $startDate = Carbon::now()->addDays($data[1]);
+            $dueDate = (clone $startDate)->addDays($data[2]);
 
-        // 4. Create Tickets and associate them with Epics
-        // Tickets for Epic 1
-        Ticket::factory()->create([
-            'project_id' => $project->id,
-            'epic_id' => $epic1->id,
-            'name' => 'Setup database schema',
-            'responsible_id' => $user1->id,
-        ]);
-        Ticket::factory()->create([
-            'project_id' => $project->id,
-            'epic_id' => $epic1->id,
-            'name' => 'Implement user registration',
-            'responsible_id' => $user2->id,
-        ]);
+            Ticket::factory()->create([
+                'project_id' => $project->id,
+                'name' => $data[0],
+                'responsible_id' => $devs->random()->id, // Random assignment within team
+                'status_id' => $this->getRandomStatus($index, $statusIds), // Time-based status logic
+                'priority_id' => $priorityIds[array_rand($priorityIds)], // Random priority
+                'start_date' => $startDate,
+                'due_date' => $dueDate,
+                'epic_id' => null, // Completely disable Epic as requested
+            ]);
+        }
+    }
 
-        // Tickets for Epic 2
-        Ticket::factory()->create([
-            'project_id' => $project->id,
-            'epic_id' => $epic2->id,
-            'name' => 'Build project dashboard',
-            'responsible_id' => $user1->id,
-        ]);
-        Ticket::factory()->create([
-            'project_id' => $project->id,
-            'epic_id' => $epic2->id,
-            'name' => 'Develop ticket management module',
-            'responsible_id' => $user2->id,
-        ]);
-        Ticket::factory()->create([
-            'project_id' => $project->id,
-            'epic_id' => $epic2->id,
-            'name' => 'Integrate Kanban board',
-            'responsible_id' => $user1->id,
-        ]);
-
-        // Tickets for Epic 3
-        Ticket::factory()->create([
-            'project_id' => $project->id,
-            'epic_id' => $epic3->id,
-            'name' => 'Conduct user acceptance testing',
-            'responsible_id' => $user2->id,
-        ]);
+    // Helper function to make status progression more realistic
+    // (Earlier tasks are more likely to be Done)
+    private function getRandomStatus($index, $statusIds)
+    {
+        if ($index < 3) return 3; // Done (Assuming ID 3 is Done)
+        if ($index < 7) return rand(2, 3); // In Progress or Done
+        return $statusIds[array_rand($statusIds)]; // Random for remaining tasks
     }
 }

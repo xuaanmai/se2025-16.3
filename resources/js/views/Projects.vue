@@ -70,8 +70,20 @@
               {{ new Date(project.created_at).toLocaleDateString() }}
             </td>
             <td class="px-5 py-5 border-b border-gray-200 bg-white text-sm text-right">
-              <button @click="openEditModal(project)" class="text-indigo-600 hover:text-indigo-900 mr-4">Edit</button>
-              <button @click="confirmDelete(project)" class="text-red-600 hover:text-red-900">Delete</button>
+              <button
+                v-if="canManageProject(project)"
+                @click="openEditModal(project)"
+                class="text-indigo-600 hover:text-indigo-900 mr-4"
+              >
+                Edit
+              </button>
+              <button
+                v-if="canManageProject(project)"
+                @click="confirmDelete(project)"
+                class="text-red-600 hover:text-red-900"
+              >
+                Delete
+              </button>
             </td>
           </tr>
            <tr v-if="projectsStore.projects.length === 0">
@@ -83,7 +95,7 @@
       <!-- Pagination -->
       <div class="px-5 py-5 bg-white border-t flex flex-col xs:flex-row items-center xs:justify-between">
         <span class="text-xs xs:text-sm text-gray-900">
-          Showing {{ projectsStore.projects.length }} of {{ projectsStore.pagination.total }} projects
+          Showing {{ projectsStore.projects.length }} of {{ totalUserProjects }} projects
         </span>
         <div class="inline-flex mt-2 xs:mt-0">
           <button 
@@ -114,23 +126,48 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue';
+import { ref, onMounted, computed } from 'vue'; // <-- thêm computed
 import { useProjectsStore } from '@/stores/projects';
+import { useAuthStore } from '@/stores/index';
 import ProjectFormModal from '../components/Projects/ProjectFormModal.vue';
 
 const projectsStore = useProjectsStore();
+const authStore = useAuthStore();
 const isModalOpen = ref(false);
 const selectedProject = ref(null);
 
-onMounted(() => {
-  projectsStore.fetchProjects();
+onMounted(async () => {
+  await projectsStore.fetchProjects(); // fetch tất cả projects
+  filterUserProjects();
 });
 
-const changePage = (page) => {
+// Lọc các project mà user sở hữu hoặc tham gia
+const filterUserProjects = () => {
+  const userId = authStore.user?.id;
+  if (!userId) return;
+
+  projectsStore.projects = projectsStore.projects.filter(
+    p => p.owner_id === userId || (p.users?.some(u => u.id === userId))
+  );
+};
+
+const changePage = async (page) => {
   if (page > 0 && page <= projectsStore.pagination.totalPages) {
-    projectsStore.fetchProjects(page);
+    await projectsStore.fetchProjects(page);
+    filterUserProjects(); // lọc lại sau khi chuyển trang
   }
 };
+
+const canManageProject = (project) => {
+  const user = authStore.user;
+  if (!user || !project) return false;
+  if (project.owner_id === user.id) return true;
+  if (!project.users || !Array.isArray(project.users)) return false;
+  return project.users.some(
+    (u) => u.id === user.id && u.pivot?.role === 'administrator'
+  );
+};
+
 
 const openCreateModal = () => {
   selectedProject.value = null;
@@ -138,6 +175,7 @@ const openCreateModal = () => {
 };
 
 const openEditModal = (project) => {
+  if (!canManageProject(project)) return;
   selectedProject.value = { ...project };
   isModalOpen.value = true;
 };
@@ -149,20 +187,32 @@ const closeModal = () => {
 
 const handleSave = async (payload) => {
   if (payload.id) {
-    // Update
     await projectsStore.updateProject(payload.id, payload.data);
   } else {
-    // Create
     await projectsStore.createProject(payload.data);
   }
   if (!projectsStore.error) {
     closeModal();
+    await projectsStore.fetchProjects();
+    filterUserProjects();
   }
 };
 
 const confirmDelete = (project) => {
+  if (!canManageProject(project)) return;
   if (window.confirm(`Are you sure you want to delete the project "${project.name}"?`)) {
-    projectsStore.deleteProject(project.id);
+    projectsStore.deleteProject(project.id).then(() => {
+      filterUserProjects();
+    });
   }
 };
+
+// Tổng số project của user
+const totalUserProjects = computed(() => {
+  const userId = authStore.user?.id;
+  if (!userId) return 0;
+  return projectsStore.projects.filter(
+    p => p.owner_id === userId || (p.users?.some(u => u.id === userId))
+  ).length;
+});
 </script>

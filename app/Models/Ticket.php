@@ -156,6 +156,18 @@ class Ticket extends Model implements HasMedia
         return $this->belongsTo(Sprint::class, 'sprint_id', 'id');
     }
 
+    public function dependencies(): HasMany
+    {
+        return $this->hasMany(TicketRelation::class, 'ticket_id', 'id')
+            ->where('type', 'depends_on');
+    }
+
+    public function dependents(): HasMany
+    {
+        return $this->hasMany(TicketRelation::class, 'relation_id', 'id')
+            ->where('type', 'depends_on');
+    }
+
     public function watchers(): Attribute
     {
         return new Attribute(
@@ -232,6 +244,14 @@ class Ticket extends Model implements HasMedia
     {
         return new Attribute(
             get: fn() => $this->estimationProgress
+        );
+    }
+
+
+    public function progress(): Attribute
+    {
+        return new Attribute(
+            get: fn() => $this->status?->is_final ? 100 : ($this->status_id ? 50 : 0)
         );
     }
 

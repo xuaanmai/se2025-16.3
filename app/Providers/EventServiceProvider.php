@@ -2,12 +2,23 @@
 
 namespace App\Providers;
 
+use App\Models\Ticket;
+use App\Observers\TicketObserver;
 use Illuminate\Auth\Events\Registered;
 use Illuminate\Auth\Listeners\SendEmailVerificationNotification;
 use Illuminate\Foundation\Support\Providers\EventServiceProvider as ServiceProvider;
 
 class EventServiceProvider extends ServiceProvider
 {
+    /**
+     * The model observers for your application.
+     *
+     * @var array
+     */
+    protected $observers = [
+        Ticket::class => [TicketObserver::class],
+    ];
+
     /**
      * The event to listener mappings for the application.
      *

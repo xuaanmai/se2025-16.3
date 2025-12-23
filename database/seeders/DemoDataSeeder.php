@@ -59,12 +59,12 @@ class DemoDataSeeder extends Seeder
         // 4. Assign users to projects and create tickets
         foreach ($projects as $project) {
             // Assign main user as manager
-            $project->users()->attach($mainUser->id, ['role' => 'administrator']);
+            $project->users()->attach($mainUser->id, ['role' => 'manager']);
             
             // Assign 3-5 random users as members
             $projectMembers = $users->random(rand(3, 5));
             foreach ($projectMembers as $member) {
-                $project->users()->attach($member->id, ['role' => 'employee']);
+                $project->users()->attach($member->id, ['role' => 'member']);
             }
             $projectTeam = $projectMembers->merge([$mainUser]);
 
