@@ -7,6 +7,7 @@ export const useProjectsStore = defineStore('projects', {
   state: () => ({
     projects: [],
     project: null,
+    shortcutProjects: JSON.parse(localStorage.getItem('shortcutProjects') || '[]'), // <-- khởi tạo
     pagination: {
       currentPage: 1,
       totalPages: 1,
@@ -312,6 +313,30 @@ export const useProjectsStore = defineStore('projects', {
         } finally {
             this.loading = false;
         }
+    },
+      
+  // Thêm project vào shortcut
+    addShortcut(project) {
+      if (!this.shortcutProjects.find(p => p.id === project.id)) {
+        this.shortcutProjects.push(project);
+        this.saveShortcutsToLocal();
+      }
+    },
+
+    // Xóa project khỏi shortcut
+    removeShortcut(projectId) {
+      this.shortcutProjects = this.shortcutProjects.filter(p => p.id !== projectId);
+      this.saveShortcutsToLocal();
+    },
+
+    // Lưu shortcut vào localStorage
+    saveShortcutsToLocal() {
+      localStorage.setItem('shortcutProjects', JSON.stringify(this.shortcutProjects));
+    },
+
+    // Tải shortcut từ localStorage (nếu muốn refresh thủ công)
+    loadShortcutsFromLocal() {
+      this.shortcutProjects = JSON.parse(localStorage.getItem('shortcutProjects') || '[]');
     },
   },
 });
