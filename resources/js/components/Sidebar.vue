@@ -53,21 +53,27 @@
 </template>
 
 <script setup>
-import { ref, watchEffect } from 'vue'
+import { ref, watchEffect, computed} from 'vue'
 import ProjectQuickSwitchModal from '@/components/Projects/ProjectQuickSwitchModal.vue'
 import { useProjectsStore } from '@/stores/projects'
+import { useAuthStore } from '@/stores/index'
 
 const showProjectModal = ref(false)
 const projectsStore = useProjectsStore()
+const authStore = useAuthStore()
 
-// Lưu shortcutProjects vào localStorage để giữ khi refresh
+const userKey = computed(() => `shortcutProjects_${authStore.user?.id}`)
+
+// Lưu shortcutProjects vào localStorage riêng từng user
 watchEffect(() => {
-  localStorage.setItem('shortcutProjects', JSON.stringify(projectsStore.shortcutProjects))
+  if (authStore.user?.id) {
+    localStorage.setItem(userKey.value, JSON.stringify(projectsStore.shortcutProjects))
+  }
 })
 
-// Khi load sidebar, lấy lại shortcutProjects từ localStorage
+// Khi load sidebar, lấy lại shortcutProjects từ localStorage của user
 try {
-  const storedShortcuts = localStorage.getItem('shortcutProjects')
+  const storedShortcuts = localStorage.getItem(userKey.value)
   if (storedShortcuts) {
     projectsStore.shortcutProjects = JSON.parse(storedShortcuts)
   }
