@@ -5,12 +5,6 @@
       <h3 class="font-semibold text-lg text-gray-800">
         Upcoming Tasks (Next 3 Days)
       </h3>
-      <router-link
-        to="/tasks"
-        class="text-sm text-blue-600 hover:underline"
-      >
-        View all
-      </router-link>
     </div>
 
     <!-- Task List -->
