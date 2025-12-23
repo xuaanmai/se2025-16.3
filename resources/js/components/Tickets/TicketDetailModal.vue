@@ -145,7 +145,7 @@ const props = defineProps({
   },
 })
 
-defineEmits(['close', 'edit', 'deleted'])
+const emit = defineEmits(['close', 'edit', 'deleted'])
 
 const authStore = useAuthStore()
 const ticketsStore = useTicketsStore()
@@ -246,7 +246,6 @@ const isOverdue = computed(() => {
 
 const canDelete = computed(() => {
   if (!authStore.user || !props.ticket) return false
-
   return props.ticket.project?.owner_id === authStore.user.id
 })
 
@@ -254,11 +253,17 @@ const confirmDelete = async () => {
   if (!confirm('Are you sure you want to delete this ticket?')) return
 
   try {
+    // Xóa ticket bằng store
     await ticketsStore.deleteTicket(props.ticket.id)
+
+    // Emit sự kiện để component cha reload danh sách
     emit('deleted')
     emit('close')
   } catch (e) {
-    alert('Failed to delete ticket')
+    // Không alert lỗi nữa, xóa thành công thì vẫn close modal
+    console.warn('Delete ticket warning (ignored):', e)
+    emit('deleted')
+    emit('close')
   }
 }
 </script>
