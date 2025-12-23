@@ -55,7 +55,7 @@ export const useTicketsStore = defineStore('tickets', {
       this.ticket = null;
       try {
         const response = await api.get(`/tickets/${id}`);
-        this.ticket = response.data.data;
+        this.ticket = response.data;
       } catch (err) {
         this.error = 'Failed to fetch ticket details.';
         console.error(err);
@@ -80,24 +80,29 @@ export const useTicketsStore = defineStore('tickets', {
         }
     },
 
-    async updateTicket(id, ticketData) {
-        this.loading = true;
-        this.error = null;
-        try {
-            const response = await api.put(`/tickets/${id}`, ticketData);
-            await this.fetchTickets(this.pagination.currentPage);
-            if (this.ticket && this.ticket.id === id) {
-                this.ticket = response.data.data;
-            }
-            return response.data.data;
-        } catch (err) {
-            this.error = err.response?.data?.message || 'Failed to update ticket.';
-            console.error(err);
-            throw err;
-        } finally {
-            this.loading = false;
-        }
-    },
+async updateTicket(id, ticketData) {
+  this.loading = true
+  this.error = null
+
+  try {
+    await api.put(`/tickets/${id}`, ticketData)
+
+    // refresh list
+    await this.fetchTickets(this.pagination.currentPage)
+
+    // 🔥 QUAN TRỌNG: refresh ticket đang xem
+    if (this.ticket && this.ticket.id === id) {
+      await this.fetchTicket(id)
+    }
+
+  } catch (err) {
+    this.error = err.response?.data?.message || 'Failed to update ticket.'
+    console.error(err)
+    throw err
+  } finally {
+    this.loading = false
+  }
+},
 
      async deleteTicket(id) {
         this.loading = true;

@@ -42,14 +42,10 @@ class TicketController extends Controller
             });
         }
 
-        // Pagination with support for per_page = -1 (return all)
+        // Pagination
         $perPage = $request->get('per_page', 15);
-        if ((int) $perPage === -1) {
-            $tickets = $query->orderBy('order')->get();
-            return response()->json($tickets);
-        }
-
         $tickets = $query->orderBy('order')->paginate($perPage);
+
         return response()->json($tickets);
     }
 
@@ -77,6 +73,9 @@ class TicketController extends Controller
             'estimation' => 'nullable|numeric|min:0',
             'sprint_id' => 'nullable|exists:sprints,id',
             'epic_id' => 'nullable|exists:epics,id',
+            // thêm start và due
+            'start_date' => 'nullable|date',
+            'due_date' => 'nullable|date|after_or_equal:start_date',
         ]);
 
         // Đảm bảo content không bị null khi lưu vào DB
@@ -127,6 +126,8 @@ class TicketController extends Controller
             'epic_id' => 'nullable|exists:epics,id',
             'sprint_id' => 'nullable|exists:sprints,id',
             'order' => 'nullable|integer',
+            'start_date' => 'nullable|date',
+            'due_date'   => 'nullable|date|after_or_equal:start_date',
         ]);
 
         $ticket->update($validated);
