@@ -39,10 +39,6 @@ Route::post('/register', [AuthController::class, 'register'])->middleware('web')
 
 // Protected API routes
 Route::middleware(['web', 'auth'])->group(function () {
-    // Authenticated session helpers
-    Route::get('/user', [AuthController::class, 'user']);
-    Route::post('/logout', [AuthController::class, 'logout']);
-
     // Dashboard
     Route::get('/dashboard/stats', [DashboardController::class, 'stats']);
     Route::get('/dashboard/favorite-projects', [DashboardController::class, 'favoriteProjects']);
@@ -78,7 +74,6 @@ Route::middleware(['web', 'auth'])->group(function () {
     Route::get('/tickets/{ticket}/hours', [TicketController::class, 'getHours']);
     Route::post('/tickets/{ticket}/hours', [TicketController::class, 'logHours']);
     Route::get('/tickets/{ticket}/export-hours', [TicketController::class, 'exportHours']);
-    
     Route::get('/users/me', [UserController::class, 'me']);
     Route::put('/users/me', [UserController::class, 'updateMe']);
 
