@@ -11,7 +11,8 @@ class SprintController extends Controller
 {
     public function index(Request $request)
     {
-        $query = Sprint::with(['project', 'epic', 'tickets']);
+        $query = Sprint::with(['project', 'epic', 'tickets'])
+            ->withCount('tickets');
 
         // Filter by project
         if ($request->has('project_id')) {
@@ -33,6 +34,7 @@ class SprintController extends Controller
     public function show(Sprint $sprint)
     {
         $sprint->load(['project', 'epic', 'tickets']);
+        $sprint->loadCount('tickets');
         return response()->json($sprint);
     }
 
@@ -48,6 +50,7 @@ class SprintController extends Controller
 
         $sprint = Sprint::create($validated);
         $sprint->load(['project', 'epic', 'tickets']);
+        $sprint->loadCount('tickets');
 
         return response()->json($sprint, 201);
     }
@@ -63,6 +66,7 @@ class SprintController extends Controller
 
         $sprint->update($validated);
         $sprint->load(['project', 'epic', 'tickets']);
+        $sprint->loadCount('tickets');
 
         return response()->json($sprint);
     }
@@ -104,6 +108,7 @@ class SprintController extends Controller
         $sprint->started_at = $now;
         $sprint->save();
         $sprint->load(['project', 'epic', 'tickets']);
+        $sprint->loadCount('tickets');
 
         return response()->json([
             'message' => 'Sprint started successfully',
@@ -133,6 +138,7 @@ class SprintController extends Controller
         $sprint->ended_at = now();
         $sprint->save();
         $sprint->load(['project', 'epic', 'tickets']);
+        $sprint->loadCount('tickets');
 
         return response()->json([
             'message' => 'Sprint stopped successfully',
@@ -157,6 +163,7 @@ class SprintController extends Controller
         Ticket::whereIn('id', $validated['ticket_ids'])->update(['sprint_id' => $sprint->id]);
 
         $sprint->load(['project', 'epic', 'tickets']);
+        $sprint->loadCount('tickets');
 
         return response()->json([
             'message' => 'Tickets associated with sprint successfully',

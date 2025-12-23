@@ -42,10 +42,14 @@ class TicketController extends Controller
             });
         }
 
-        // Pagination
+        // Pagination with support for per_page = -1 (return all)
         $perPage = $request->get('per_page', 15);
-        $tickets = $query->orderBy('order')->paginate($perPage);
+        if ((int) $perPage === -1) {
+            $tickets = $query->orderBy('order')->get();
+            return response()->json($tickets);
+        }
 
+        $tickets = $query->orderBy('order')->paginate($perPage);
         return response()->json($tickets);
     }
 
