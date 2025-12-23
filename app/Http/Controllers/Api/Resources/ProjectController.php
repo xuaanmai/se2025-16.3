@@ -18,8 +18,25 @@ class ProjectController extends Controller
 {
     public function index(Request $request)
     {
+        $user = auth()->user();
+
+        if (!$user) {
+            abort(401);
+        }
+
         $query = Project::with(['owner', 'status', 'users'])
             ->withCount(['tickets']);
+
+        // Filter by user access: only show projects where user is owner or member
+        // Admin users can see all projects
+        if (!$user->hasRole('admin')) {
+            $query->where(function ($q) use ($user) {
+                $q->where('owner_id', $user->id)
+                    ->orWhereHas('users', function ($query) use ($user) {
+                        $query->where('users.id', $user->id);
+                    });
+            });
+        }
 
         // Search
         if ($request->has('search')) {
