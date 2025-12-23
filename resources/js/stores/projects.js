@@ -7,6 +7,7 @@ export const useProjectsStore = defineStore('projects', {
   state: () => ({
     projects: [],
     project: null,
+    shortcutProjects: JSON.parse(localStorage.getItem('shortcutProjects') || '[]'), // <-- khởi tạo từ localStorage
     pagination: {
       currentPage: 1,
       totalPages: 1,
@@ -25,26 +26,17 @@ export const useProjectsStore = defineStore('projects', {
         const params = { page, ...filters };
         const response = await api.get('/projects', { params });
         
-        // Defensive handling for different pagination structures:
-        // - Laravel API Resource paginator: { data: [...], meta: { current_page, last_page, total, per_page } }
-        // - Laravel LengthAwarePaginator JSON: { data: [...], current_page, last_page, total, per_page, ... }
-        // - Fallback plain array: [...]
+        // Defensive check for response structure
         const responseData = response.data || {};
-        const meta = responseData.meta && typeof responseData.meta === 'object'
-          ? responseData.meta
-          : null;
-
-        // Determine the list of projects
-        const data = Array.isArray(responseData)
-          ? responseData
-          : (responseData.data || []);
+        const meta = responseData.meta || {};
+        const data = responseData.data || [];
 
         this.projects = data;
         this.pagination = {
-          currentPage: (meta?.current_page) ?? responseData.current_page ?? 1,
-          totalPages: (meta?.last_page) ?? responseData.last_page ?? 1,
-          total: (meta?.total) ?? responseData.total ?? data.length,
-          perPage: (meta?.per_page) ?? responseData.per_page ?? (data.length || 15),
+          currentPage: meta.current_page || 1,
+          totalPages: meta.last_page || 1,
+          total: meta.total || 0,
+          perPage: meta.per_page || 15,
         };
       } catch (err) {
         this.error = 'Failed to fetch projects.';
@@ -228,5 +220,30 @@ export const useProjectsStore = defineStore('projects', {
             this.loading = false;
         }
     },
+
+    // Thêm project vào shortcut
+    addShortcut(project) {
+      if (!this.shortcutProjects.find(p => p.id === project.id)) {
+        this.shortcutProjects.push(project);
+        this.saveShortcutsToLocal();
+      }
+    },
+
+    // Xóa project khỏi shortcut
+    removeShortcut(projectId) {
+      this.shortcutProjects = this.shortcutProjects.filter(p => p.id !== projectId);
+      this.saveShortcutsToLocal();
+    },
+
+    // Lưu shortcut vào localStorage
+    saveShortcutsToLocal() {
+      localStorage.setItem('shortcutProjects', JSON.stringify(this.shortcutProjects));
+    },
+
+    // Tải shortcut từ localStorage (nếu muốn refresh thủ công)
+    loadShortcutsFromLocal() {
+      this.shortcutProjects = JSON.parse(localStorage.getItem('shortcutProjects') || '[]');
+    },
+
   },
 });
