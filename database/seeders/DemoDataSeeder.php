@@ -60,7 +60,7 @@ class DemoDataSeeder extends Seeder
         foreach ($projects as $project) {
             // Assign main user as manager
             $project->users()->attach($mainUser->id, ['role' => 'administrator']);
-            
+
             // Assign 3-5 random users as members
             $projectMembers = $users->random(rand(3, 5));
             foreach ($projectMembers as $member) {
