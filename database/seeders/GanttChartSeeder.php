@@ -20,7 +20,7 @@ class GanttChartSeeder extends Seeder
             'email' => 'manager@planora.app',
             'password' => Hash::make('password'),
         ]);
-        $mainUser->assignRole('Manager');
+        $mainUser->assignRole('Default role');
         
         // 1. Create target project
         $project = Project::factory()->create([
@@ -33,7 +33,7 @@ class GanttChartSeeder extends Seeder
         $devs = collect(['Le Nam', 'Tran Hung', 'Nguyen Lan', 'Pham Minh'])
             ->map(function ($name) use ($project) {
                 $user = User::factory()->create(['name' => $name]);
-                $project->users()->attach($user->id, ['role' => 'member']);
+                $project->users()->attach($user->id, ['role' => 'employee']);
                 return $user;
             });
 

@@ -25,12 +25,12 @@ class DemoDataSeeder extends Seeder
             'email' => 'manager@planora.app',
             'password' => Hash::make('password'),
         ]);
-        $mainUser->assignRole('Manager');
+        $user->assignRole('Default role');
 
         // 2. Create a pool of other users
         $users = User::factory(10)->create();
         foreach ($users as $user) {
-            $user->assignRole('Developer');
+            $user->assignRole('Default role');
         }
 
         $allUsers = $users->merge([$mainUser]);
@@ -59,12 +59,12 @@ class DemoDataSeeder extends Seeder
         // 4. Assign users to projects and create tickets
         foreach ($projects as $project) {
             // Assign main user as manager
-            $project->users()->attach($mainUser->id, ['role' => 'manager']);
-            
+            $project->users()->attach($mainUser->id, ['role' => 'administrator']);
+
             // Assign 3-5 random users as members
             $projectMembers = $users->random(rand(3, 5));
             foreach ($projectMembers as $member) {
-                $project->users()->attach($member->id, ['role' => 'member']);
+                $project->users()->attach($member->id, ['role' => 'employee']);
             }
             $projectTeam = $projectMembers->merge([$mainUser]);
 
