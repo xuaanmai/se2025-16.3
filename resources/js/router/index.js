@@ -63,7 +63,7 @@ const routes = [
       {
         path: 'projects/:id/roadmap',
         name: 'Roadmap',
-        component: () => import('../views/RoadMap.vue'),
+        component: () => import('../views/Roadmap.vue'),
         props: true,
         meta: { title: 'Project Roadmap' },
       },
