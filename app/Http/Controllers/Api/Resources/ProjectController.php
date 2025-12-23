@@ -340,9 +340,9 @@ class ProjectController extends Controller
     // ProjectController.php
     public function getSprints(Project $project)
     {
-        // Sử dụng withCount để lấy trường tickets_count mà frontend yêu cầu
+        // Load tickets relationship để có thể hiển thị trong UI
         $sprints = $project->sprints()
-            ->with(['epic']) // Giữ lại epic nếu bạn cần dùng sau này
+            ->with(['epic', 'tickets.status', 'tickets.priority', 'tickets.type']) // Load tickets với relations
             ->withCount('tickets') // Thêm cái này để có sprint.tickets_count
             ->orderBy('starts_at', 'asc') // Sắp xếp theo ngày bắt đầu để dễ nhìn
             ->get();
