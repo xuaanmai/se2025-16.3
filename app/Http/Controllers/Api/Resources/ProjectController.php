@@ -80,6 +80,8 @@ class ProjectController extends Controller
 
     public function store(Request $request)
     {
+        $this->authorize('create', Project::class);
+
         $validated = $request->validate([
             'name' => 'required|string|max:255',
             'description' => 'nullable|string',
@@ -114,6 +116,13 @@ class ProjectController extends Controller
 
         $project = Project::create($validated);
 
+        // Ensure owner is also added as project member with manager role
+        if ($project->owner_id) {
+            $project->users()->syncWithoutDetaching([
+                $project->owner_id => ['role' => config('system.projects.affectations.roles.can_manage', 'administrator')]
+            ]);
+        }
+
         // Handle cover image upload
         if ($request->hasFile('cover')) {
             $project->addMediaFromRequest('cover')
@@ -132,6 +141,8 @@ class ProjectController extends Controller
 
     public function update(Request $request, Project $project)
     {
+        $this->authorize('update', $project);
+
         $validated = $request->validate([
             'name' => 'sometimes|required|string|max:255',
             'description' => 'nullable|string',
@@ -177,6 +188,13 @@ class ProjectController extends Controller
 
         $project->update($validated);
 
+        // If owner changed, ensure new owner is attached as member with manager role
+        if ($project->owner_id) {
+            $project->users()->syncWithoutDetaching([
+                $project->owner_id => ['role' => config('system.projects.affectations.roles.can_manage', 'administrator')]
+            ]);
+        }
+
         // Handle cover image upload/replacement
         if ($request->hasFile('cover')) {
             // Xóa cover cũ nếu có
@@ -198,6 +216,8 @@ class ProjectController extends Controller
 
     public function destroy(Project $project)
     {
+        $this->authorize('delete', $project);
+
         $project->delete();
         return response()->json(['message' => 'Project deleted successfully']);
     }
