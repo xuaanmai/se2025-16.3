@@ -1,176 +1,210 @@
 <template>
-  <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
-    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
-      <div>
-        <h3 class="font-bold text-xl text-gray-900">Project Roadmap</h3>
-        <p class="text-sm text-gray-500">Quản lý tiến độ Epics và các Ticket liên quan</p>
-      </div>
-      
-      <div class="flex items-center gap-2 bg-gray-50 p-1 rounded-lg border border-gray-200">
-        <button 
-          v-for="mode in ['Day', 'Week', 'Month']" 
-          :key="mode"
-          @click="changeViewMode(mode)"
-          :class="[
-            viewMode === mode ? 'bg-white shadow-sm text-blue-600' : 'text-gray-500 hover:text-gray-700',
-            'px-3 py-1.5 rounded-md text-xs font-semibold transition-all'
-          ]"
-        >
-          {{ mode }}
-        </button>
-      </div>
+  <div class="roadmap-app">
+    <component is="style" v-if="tasksData.length">{{ dynamicGanttStyles }}</component>
 
-      <button @click="isModalOpen = true" class="px-5 py-2 text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition-colors font-medium text-sm shadow-sm">
-        + Create Epic
-      </button>
-    </div>
-
-    <div class="relative min-h-[400px] border border-gray-100 rounded-xl overflow-hidden bg-gray-50/30">
-      <div v-if="loading" class="absolute inset-0 flex items-center justify-center bg-white/80 z-10">
-        <div class="flex flex-col items-center gap-2">
-          <div class="w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
-          <span class="text-sm font-medium text-gray-600">Đang tải lộ trình...</span>
+    <div class="main-card">
+      <div class="header-area">
+        <div class="title-group">
+          <h2 class="title-text">Task Flow & Roadmap</h2>
+          <p class="subtitle-text">Real-time Synchronization</p>
+        </div>
+        
+        <div class="action-group">
+          <div class="mode-pills">
+            <button v-for="mode in ['Day', 'Week']" :key="mode" @click="changeViewMode(mode)"
+              :class="['pill-btn', { active: viewMode === mode }]">{{ mode }}</button>
+          </div>
+          <button @click="scrollToToday" class="today-btn">Today</button>
         </div>
       </div>
-      
-      <div v-if="!loading && error" class="p-10 text-center text-red-500 flex flex-col items-center">
-        <svg class="w-12 h-12 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
-        {{ error }}
+
+      <div class="legend-card">
+        <div class="legend-flex">
+          <div class="legend-section">
+            <span class="label">STATUS:</span>
+            <div class="items">
+              <div v-for="s in legendData.statuses" :key="s.name" class="item">
+                <span class="dot" :style="{ backgroundColor: s.color }"></span>
+                <span class="text">{{ s.name }}</span>
+              </div>
+              <span v-if="!legendData.statuses.length" class="no-data">(No status used)</span>
+            </div>
+          </div>
+          <div class="legend-divider"></div>
+          <div class="legend-section">
+            <span class="label">PRIORITY:</span>
+            <div class="items">
+              <div v-for="p in legendData.priorities" :key="p.name" class="item">
+                <span class="outline-box" :style="{ borderColor: p.color }"></span>
+                <span class="text">{{ p.name }}</span>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
 
-      <div class="gantt-target-wrapper overflow-auto" v-show="!loading && !error">
-        <svg ref="ganttContainer" class="gantt-chart"></svg>
+      <div class="gantt-outer">
+        <div v-if="loading" class="loader-overlay"><div class="spinner"></div></div>
+        <div class="gantt-scroll-box" ref="scrollBox" 
+             @mousedown="onDragStart" @mousemove="onDragMove" @mouseup="onDragEnd" @mouseleave="onDragEnd">
+          <div ref="ganttContainer" class="frappe-gantt-custom"></div>
+        </div>
       </div>
     </div>
-
-    <EpicFormModal v-if="isModalOpen" :project-id="projectId" @close="isModalOpen = false" @save="handleSaveEpic" />
   </div>
 </template>
 
 <script setup>
-import { ref, onMounted, watch, nextTick } from 'vue';
+import { ref, computed, onMounted, nextTick } from 'vue';
 import axios from 'axios';
-import 'frappe-gantt/dist/frappe-gantt.css'; 
-import EpicFormModal from '../Epics/EpicFormModal.vue';
+import Gantt from 'frappe-gantt';
 
 const props = defineProps({ projectId: { type: String, required: true } });
 const ganttContainer = ref(null);
+const scrollBox = ref(null);
+const tasksData = ref([]);
+const legendData = ref({ statuses: [], priorities: [] });
 const loading = ref(true);
-const error = ref(null);
-const isModalOpen = ref(false);
 const viewMode = ref('Week');
 let ganttInstance = null;
 
-const changeViewMode = (mode) => {
-  viewMode.value = mode;
-  if (ganttInstance) ganttInstance.change_view_mode(mode);
+// Logic Kéo chuột để cuộn
+const isDragging = ref(false);
+const startX = ref(0);
+const scrollLeftStart = ref(0);
+
+const onDragStart = (e) => {
+  isDragging.value = true;
+  startX.value = e.pageX - scrollBox.value.offsetLeft;
+  scrollLeftStart.value = scrollBox.value.scrollLeft;
+};
+const onDragEnd = () => isDragging.value = false;
+const onDragMove = (e) => {
+  if (!isDragging.value) return;
+  const x = e.pageX - scrollBox.value.offsetLeft;
+  const walk = (x - startX.value) * 1.5;
+  scrollBox.value.scrollLeft = scrollLeftStart.value - walk;
+};
+
+const dynamicGanttStyles = computed(() => {
+  return tasksData.value.map(task => `
+    .gantt g[data-id="${task.id}"] .bar-progress { fill: ${task.status_color} !important; opacity: 0.9; }
+    .gantt g[data-id="${task.id}"] .bar { 
+      stroke: ${task.priority_color} !important; 
+      stroke-width: 1.5px !important; 
+      fill: #ffffff !important;
+      rx: 4px; ry: 4px;
+    }
+  `).join('\n');
+});
+
+const scrollToToday = () => {
+  const todayHighlight = document.querySelector('.today-highlight');
+  if (todayHighlight && scrollBox.value) {
+    todayHighlight.scrollIntoView({ behavior: 'smooth', inline: 'center' });
+  }
 };
 
 const fetchAndRenderGantt = async () => {
-  const Gantt = window.Gantt;
-  if (!Gantt || !props.projectId) return;
-
   loading.value = true;
-  error.value = null;
-
   try {
     const response = await axios.get(`/api/projects/${props.projectId}/roadmap`);
-    const epics = response.data.epics;
-
-    if (!epics || epics.length === 0) {
-      error.value = 'Chưa có Epic nào. Hãy tạo mới để xây dựng lộ trình.';
-      return;
-    }
-
-    const tasks = epics.map(epic => ({
-      id: String(epic.id),
-      name: epic.name,
-      start: epic.starts_at,
-      end: epic.ends_at,
-      progress: epic.progress || 0,
-      custom_class: 'custom-epic-bar',
-      custom_data: { tickets: epic.tickets || [] }
-    }));
+    tasksData.value = response.data.tasks;
+    legendData.value = response.data.legend;
+    loading.value = false;
 
     await nextTick();
-    ganttInstance = new Gantt(ganttContainer.value, tasks, {
-      view_mode: viewMode.value,
-      language: 'en',
-      bar_height: 30,
-      padding: 18,
-      header_height: 60,
-      column_width: 40,
-      custom_popup_html: function(task) {
-        const ticketTags = task.custom_data.tickets.map(t => 
-          `<span class="px-2 py-0.5 bg-blue-50 text-blue-700 rounded border border-blue-100 text-[10px] font-medium">${t.code}</span>`
-        ).join(' ');
 
-        return `
-          <div class="popup-wrapper shadow-xl border-0 rounded-lg overflow-hidden bg-white min-w-[200px]">
-            <div class="p-3 bg-gray-900 text-white">
-              <div class="text-xs opacity-70 mb-1">Epic Name</div>
-              <div class="font-bold text-sm">${task.name}</div>
-            </div>
-            <div class="p-3 bg-white space-y-2">
-              <div class="flex justify-between text-[11px] text-gray-500">
-                <span>Start: ${task._start.toLocaleDateString()}</span>
-                <span>End: ${task._end.toLocaleDateString()}</span>
-              </div>
-              <div class="border-t pt-2">
-                <div class="text-[11px] font-semibold text-gray-400 uppercase mb-2">Associated Tickets</div>
-                <div class="flex flex-wrap gap-1">${ticketTags || '<span class="text-gray-400 italic">No tickets</span>'}</div>
-              </div>
-            </div>
-          </div>
-        `;
-      }
-    });
-  } catch (err) {
-    error.value = 'Không thể tải dữ liệu lộ trình.';
-  } finally {
-    loading.value = false;
+    const options = {
+      view_mode: viewMode.value,
+      bar_height: 22, // Mảnh hơn để vừa khung hình
+      padding: 14,
+      header_height: 40,
+      column_width: viewMode.value === 'Day' ? 25 : 85,
+      bar_corner_radius: 4,
+      custom_popup_html: (task) => `<div class="mini-popup">${task.name}</div>`
+    };
+
+    if (ganttInstance) {
+      ganttInstance.refresh(tasksData.value);
+    } else {
+      ganttInstance = new Gantt(ganttContainer.value, tasksData.value, options);
+    }
+    
+    setTimeout(scrollToToday, 500);
+  } catch (err) { console.error(err); loading.value = false; }
+};
+
+const changeViewMode = (mode) => {
+  viewMode.value = mode;
+  if (ganttInstance) {
+    ganttInstance.options.column_width = mode === 'Day' ? 25 : 85;
+    ganttInstance.change_view_mode(mode);
+    setTimeout(scrollToToday, 300);
   }
 };
 
 onMounted(fetchAndRenderGantt);
-watch(() => props.projectId, fetchAndRenderGantt);
 </script>
 
+<style scoped>
+/* Sử dụng font Inter cho nét chữ mảnh và hiện đại */
+.roadmap-app { 
+  font-family: 'Inter', -apple-system, system-ui, sans-serif; 
+  padding: 10px; 
+  background: #f8fafc; 
+}
+
+.main-card { 
+  background: white; border-radius: 12px; border: 1px solid #e2e8f0; 
+  box-shadow: 0 1px 4px rgba(0,0,0,0.02); overflow: hidden; 
+}
+
+.header-area { 
+  padding: 12px 20px; display: flex; justify-content: space-between; 
+  align-items: center; border-bottom: 1px solid #f1f5f9; 
+}
+.title-text { font-size: 16px; font-weight: 700; color: #1e293b; margin: 0; }
+.subtitle-text { font-size: 10px; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.5px; }
+
+.mode-pills { background: #f1f5f9; padding: 2px; border-radius: 8px; display: flex; }
+.pill-btn { 
+  padding: 4px 12px; border-radius: 6px; border: none; font-size: 11px; 
+  font-weight: 600; color: #64748b; cursor: pointer; background: transparent; 
+}
+.pill-btn.active { background: white; color: #3b82f6; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+.today-btn { 
+  background: #3b82f6; color: white; border: none; padding: 5px 12px; 
+  border-radius: 6px; font-size: 11px; font-weight: 600; cursor: pointer; margin-left: 8px; 
+}
+
+/* Legend gọn gàng */
+.legend-card { padding: 8px 20px; border-bottom: 1px solid #f1f5f9; background: #fff; }
+.legend-flex { display: flex; align-items: center; gap: 20px; }
+.legend-section { display: flex; align-items: center; gap: 8px; }
+.label { font-size: 9px; font-weight: 800; color: #cbd5e1; letter-spacing: 0.5px; }
+.items { display: flex; align-items: center; gap: 12px; }
+.item { display: flex; align-items: center; gap: 5px; font-size: 11px; font-weight: 600; color: #475569; }
+.dot { width: 8px; height: 8px; border-radius: 2px; }
+.outline-box { width: 16px; height: 8px; border: 1.5px solid; border-radius: 2px; background: #fff; }
+.legend-divider { width: 1px; height: 14px; background: #e2e8f0; }
+.no-data { font-size: 10px; color: #cbd5e1; }
+
+.gantt-outer { position: relative; min-height: 400px; }
+.gantt-scroll-box { overflow-x: auto; cursor: grab; }
+.gantt-scroll-box:active { cursor: grabbing; }
+
+.loader-overlay { position: absolute; inset: 0; background: rgba(255,255,255,0.8); z-index: 10; display: flex; justify-content: center; align-items: center; }
+.spinner { width: 20px; height: 20px; border: 2px solid #f1f5f9; border-top-color: #3b82f6; border-radius: 50%; animation: spin 0.8s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
+</style>
+
 <style>
-/* CSS gánh trọng trách làm biểu đồ đẹp hơn */
-.gantt .bar {
-  fill: #e2e8f0 !important; /* Tailwind Slate-200 */
-}
-.gantt .bar-progress {
-  fill: #3b82f6 !important; /* Tailwind Blue-500 */
-}
-.gantt .bar-label {
-  fill: #1e293b !important; /* Tailwind Slate-800 */
-  font-weight: 600;
-  font-size: 11px;
-}
-.gantt .grid-row {
-  fill: #ffffff;
-}
-.gantt .grid-row:nth-child(even) {
-  fill: #f8fafc;
-}
-.gantt .grid-header {
-  fill: #f1f5f9;
-}
-.gantt .upper-text, .gantt .lower-text {
-  fill: #64748b;
-  font-weight: 500;
-  text-transform: uppercase;
-  font-size: 10px;
-}
-/* Xóa bỏ đường viền mặc định của popup frappe */
-.popup-wrapper {
-  font-family: inherit;
-}
-.gantt-container .details-container {
-  padding: 0;
-  background: transparent;
-  box-shadow: none;
-}
+/* CSS Global cho Frappe Gantt - Nét vẽ siêu mảnh */
+.gantt .grid-header { fill: #ffffff; stroke: #f1f5f9; }
+.gantt .upper-text { fill: #94a3b8; font-size: 9px; font-weight: 700; text-transform: uppercase; }
+.gantt .lower-text { fill: #64748b; font-weight: 600; font-size: 10px; }
+.gantt .bar-label { fill: #1e293b !important; font-weight: 600 !important; font-size: 10px !important; }
+.gantt .today-highlight { fill: rgba(59, 130, 246, 0.02); stroke: #3b82f6; stroke-width: 1; stroke-dasharray: 4,4; }
+.mini-popup { background: #1e293b; color: white; padding: 4px 8px; border-radius: 4px; font-size: 10px; }
 </style>
