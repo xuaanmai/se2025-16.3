@@ -187,6 +187,22 @@ Hệ thống quản lý dự án là một ứng dụng web toàn diện đượ
 - Scrum board hiển thị đúng dữ liệu sprint
 - Roadmap hiển thị timeline chính xác
 
+###### Objective 2.3.1 Module Gantt Chart & Roadmap Visualization
+**Mục tiêu**: Phát triển công cụ trực quan hóa lộ trình dự án (Roadmap) dưới dạng biểu đồ Gantt, cho phép quản lý công việc theo dòng thời gian và mối quan hệ giữa chúng.
+
+**Kết quả mong đợi**:
+- Trực quan hóa danh sách Tickets trên timeline dựa trên `start_date` và `due_date`.
+- Tính năng tương tác: Thay đổi thời gian và tiến độ công việc bằng thao tác kéo thả (Drag & Drop).
+- Hiển thị mối quan hệ phụ thuộc (Dependencies) giữa các Tickets (Task A là tiền đề của Task B).
+- Hỗ trợ đa dạng chế độ hiển thị: Day, Week, Month.
+- Tích hợp tính năng lọc và tìm kiếm Ticket ngay trên giao diện biểu đồ.
+
+**Tiêu chí đánh giá**:
+- Biểu đồ render chính xác dữ liệu thực tế từ database.
+- Tốc độ phản hồi khi kéo thả và lưu dữ liệu qua API < 300ms.
+- Hiển thị tốt trên màn hình desktop và tablet (responsive container).
+- Đồng bộ hóa dữ liệu lập tức giữa Gantt Chart và Kanban Board.
+
 ##### Objective 2.4: Module Time Tracking
 **Mục tiêu**: Phát triển hệ thống theo dõi thời gian làm việc.
 
@@ -232,6 +248,8 @@ Hệ thống quản lý dự án là một ứng dụng web toàn diện đượ
 - Authentication hoạt động an toàn
 - Session management đúng cách
 - User management đầy đủ chức năng
+
+
 
 #### 2.2.3. Quality Objectives (Mục tiêu Chất lượng)
 
@@ -341,4 +359,5 @@ Dự án đã đạt được các mục tiêu đề ra với một hệ thống
 **Ngày hoàn thành**: 23.12.2025  
 **Phiên bản**: 1.0  
 **Trạng thái**: Hoàn thành
+
 
