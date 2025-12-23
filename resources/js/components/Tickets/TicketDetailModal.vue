@@ -25,6 +25,15 @@
             Edit
           </button>
 
+  <!-- Remove -->
+  <button
+    v-if="canDelete"
+    @click="confirmDelete"
+    class="text-sm font-medium text-red-600 hover:text-red-800"
+  >
+    Remove
+  </button>
+
           <!-- Close -->
           <button
             @click="$emit('close')"
@@ -136,7 +145,7 @@ const props = defineProps({
   },
 })
 
-defineEmits(['close', 'edit'])
+defineEmits(['close', 'edit', 'deleted'])
 
 const authStore = useAuthStore()
 const ticketsStore = useTicketsStore()
@@ -234,4 +243,22 @@ const isOverdue = computed(() => {
 
   return new Date(props.ticket.due_date) < new Date()
 })
+
+const canDelete = computed(() => {
+  if (!authStore.user || !props.ticket) return false
+
+  return props.ticket.project?.owner_id === authStore.user.id
+})
+
+const confirmDelete = async () => {
+  if (!confirm('Are you sure you want to delete this ticket?')) return
+
+  try {
+    await ticketsStore.deleteTicket(props.ticket.id)
+    emit('deleted')
+    emit('close')
+  } catch (e) {
+    alert('Failed to delete ticket')
+  }
+}
 </script>
