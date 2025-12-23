@@ -18,6 +18,7 @@ class ProjectController extends Controller
 {
     public function index(Request $request)
     {
+        /** @var \App\Models\User $user */
         $user = auth()->user();
 
         if (!$user) {
@@ -371,6 +372,7 @@ class ProjectController extends Controller
     // GET /api/projects/active
     public function active(Request $request)
     {
+        /** @var \App\Models\User $user */
         $user = auth()->user();
 
         if (!$user) {
