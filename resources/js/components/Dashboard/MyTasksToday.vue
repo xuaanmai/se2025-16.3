@@ -1,5 +1,6 @@
 <template>
   <div class="bg-white p-6 rounded-lg shadow-md">
+    <!-- Header -->
     <div class="flex justify-between items-center mb-4">
       <h3 class="font-semibold text-lg text-gray-800">
         Upcoming Tasks (Next 3 Days)
@@ -12,6 +13,7 @@
       </router-link>
     </div>
 
+    <!-- Task List -->
     <ul v-if="filteredTasks.length" class="space-y-4">
       <li
         v-for="task in filteredTasks"
@@ -38,7 +40,7 @@
           </p>
         </div>
 
-        <!-- Status -->
+        <!-- Status Badge -->
         <span
           class="text-xs px-2 py-1 rounded-full whitespace-nowrap"
           :class="statusClass(task)"
@@ -48,6 +50,7 @@
       </li>
     </ul>
 
+    <!-- No tasks -->
     <div v-else class="text-center py-6 text-gray-500">
       🎉 No tasks due in the next 3 days.
     </div>
@@ -78,20 +81,20 @@ const statusClass = (task) => {
   return 'bg-gray-100 text-gray-600'
 }
 
-// --- Lọc tasks 3 ngày tới ---
+// --- Lọc tasks 3 ngày tới và status = "Todo" ---
 const filteredTasks = computed(() => {
   const today = new Date()
-  today.setHours(0, 0, 0, 0) // 0h hôm nay
+  today.setHours(0, 0, 0, 0)
 
   const threeDaysLater = new Date(today)
   threeDaysLater.setDate(today.getDate() + 3)
-  threeDaysLater.setHours(23, 59, 59, 999) // cuối ngày thứ 3
+  threeDaysLater.setHours(23, 59, 59, 999)
 
   return props.tasks.filter((task) => {
     if (!task.due_date) return false
+    if (task.status !== 'Todo') return false  // chỉ lấy task Todo
 
     const due = new Date(task.due_date)
-    // ép về 0h local để tránh lệch do timezone
     due.setHours(0, 0, 0, 0)
 
     return due >= today && due <= threeDaysLater
