@@ -2,23 +2,22 @@
 
 namespace Database\Factories;
 
-use App\Models\Activity;
-use App\Models\Ticket;
-use App\Models\TicketHour;
+use App\Models\Project;
+use App\Models\ProjectStatus;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**
- * @extends \Illuminate\Database\Eloquent\Factories\Factory<\App\Models\TicketHour>
+ * @extends \Illuminate\Database\Eloquent\Factories\Factory<\App\Models\Project>
  */
-class TicketHourFactory extends Factory
+class ProjectFactory extends Factory
 {
     /**
      * The name of the factory's corresponding model.
      *
      * @var string
      */
-    protected $model = TicketHour::class;
+    protected $model = Project::class;
 
     /**
      * Define the model's default state.
@@ -28,11 +27,13 @@ class TicketHourFactory extends Factory
     public function definition()
     {
         return [
-            'value' => $this->faker->randomFloat(2, 0.5, 8),
-            'comment' => $this->faker->optional()->sentence(),
-            'ticket_id' => Ticket::factory(),
-            'user_id' => User::factory(),
-            'activity_id' => Activity::inRandomOrder()->first()->id ?? Activity::factory(),
+            'name' => $this->faker->company() . ' ' . $this->faker->bs(),
+            'description' => $this->faker->paragraphs(3, true),
+            'owner_id' => User::factory(),
+            'status_id' => ProjectStatus::inRandomOrder()->first()->id ?? ProjectStatus::factory(),
+            'ticket_prefix' => strtoupper($this->faker->unique()->lexify('???')),
+            'type' => $this->faker->randomElement(['kanban', 'scrum']),
+            'status_type' => 'default',
         ];
     }
 }
