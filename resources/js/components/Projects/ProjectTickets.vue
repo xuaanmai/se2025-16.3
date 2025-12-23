@@ -87,13 +87,14 @@
   :ticket="selectedTicketDetail"
   @close="showDetailModal = false"
   @edit="editTicket"
+  @deleted="onTicketDeleted"
 />
 
   </div>
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue';
+import { ref, computed } from 'vue';
 import { useAuthStore } from '@/stores';
 import { useTicketsStore } from '@/stores/tickets';
 import TicketFormModal from '../Tickets/TicketFormModal.vue';
@@ -203,4 +204,11 @@ const isOverdue = (ticket) => {
   return new Date(ticket.due_date) < new Date();
 };
 
+const onTicketDeleted = async () => {
+  showDetailModal.value = false
+  selectedTicketDetail.value = null
+
+  // reload list ticket
+  emit('ticket-created')
+}
 </script>
