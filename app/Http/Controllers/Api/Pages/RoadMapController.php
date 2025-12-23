@@ -3,288 +3,84 @@
 namespace App\Http\Controllers\Api\Pages;
 
 use App\Http\Controllers\Controller;
-use App\Models\Epic;
 use App\Models\Project;
-use App\Models\Ticket;
-use Carbon\Carbon;
+use App\Models\TicketPriority;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Log;
 
 class RoadMapController extends Controller
 {
-    /**
-     * Get roadmap data for project with clean visual hierarchy:
-     * - Main bar color = STATUS
-     * - Left border = PRIORITY  
-     * - Icon in popup = TYPE
-     */
     public function getRoadmap(Project $project)
     {
-        // === STEP 1: Authorization Check ===
-        if ($project->owner_id != auth()->id() &&
-            !$project->users->where('id', auth()->id())->count()) {
-            Log::warning('[Roadmap] Unauthorized access attempt', [
-                'project_id' => $project->id,
-                'user_id' => auth()->id()
-            ]);
+        if ($project->owner_id != auth()->id() && !$project->users->where('id', auth()->id())->count()) {
             return response()->json(['message' => 'Unauthorized'], 403);
         }
 
-        Log::info('[Roadmap] Fetching roadmap for project', [
-            'project_id' => $project->id,
-            'project_name' => $project->name,
-            'user_id' => auth()->id()
-        ]);
-
-        // === STEP 2: Query Tickets with Date Filters ===
         $tickets = $project->tickets()
             ->whereNotNull('start_date')
             ->whereNotNull('due_date')
-            ->with(['status', 'priority', 'type', 'responsible'])
+            ->with(['status', 'priority', 'responsible'])
             ->orderBy('start_date', 'asc')
             ->get();
 
-        Log::info('[Roadmap] Tickets query result', [
-            'total_tickets_in_project' => $project->tickets()->count(),
-            'tickets_with_dates' => $tickets->count(),
-            'ticket_ids' => $tickets->pluck('id')->toArray()
-        ]);
-
-        // === STEP 3: Handle Empty Results ===
-        if ($tickets->isEmpty()) {
-            Log::warning('[Roadmap] No tickets with start/due dates found', [
-                'project_id' => $project->id,
-                'total_project_tickets' => $project->tickets()->count()
-            ]);
-            return response()->json([]);
-        }
-
-        // === STEP 4: Transform Tickets to Gantt Format ===
         $tasks = [];
         foreach ($tickets as $ticket) {
-            // Get Status Information (for main bar color)
-            $statusName = $ticket->status ? $ticket->status->name : 'Todo';
-            $statusClass = $this->getStatusClass($statusName, $ticket->status);
+            $assigneeName = $ticket->responsible ? $ticket->responsible->name : 'Unassigned';
             
-            // Get Priority Information (for left border)
-            $priorityName = $ticket->priority ? $ticket->priority->name : 'Normal';
-            $priorityClass = $this->getPriorityClass($priorityName);
-            
-            // Get Type Information (for popup icon)
-            $typeName = $ticket->type ? $ticket->type->name : 'Task';
-            $typeIcon = $this->getTypeIcon($typeName);
-
-            // Calculate Progress
-            $progress = $this->calculateProgress($ticket);
-
-            // Build Enhanced Popup HTML
-            $popupHtml = $this->buildPopupHtml(
-                $ticket, 
-                $statusName, 
-                $priorityName, 
-                $typeName, 
-                $typeIcon
-            );
-
-            $task = [
+            $tasks[] = [
                 'id' => (string)$ticket->id,
-                'name' => $ticket->name,
+                // HIỂN THỊ: [Tên Task] - (Người phụ trách) để hiện thẳng lên biểu đồ
+                'name' => htmlspecialchars($ticket->name) . " - (" . htmlspecialchars($assigneeName) . ")",
                 'start' => $ticket->start_date->format('Y-m-d'),
                 'end' => $ticket->due_date->format('Y-m-d'),
-                'progress' => $progress,
-                'status_class' => $statusClass,    // ✅ Individual class
-                'priority_class' => $priorityClass, // ✅ Individual class
-                'custom_popup_html' => $popupHtml,
+                'progress' => $ticket->status?->is_final ? 100 : ($ticket->progress ?? 30),
+                'status_color' => $ticket->status->color ?? '#64748b',
+                'priority_color' => $ticket->priority->color ?? '#cbd5e1',
+                'custom_popup_html' => $this->buildModernPopup($ticket, $assigneeName)
             ];
-
-            $tasks[] = $task;
-
-            // Log each ticket for debugging
-            Log::debug('[Roadmap] Processed ticket', [
-                'ticket_id' => $ticket->id,
-                'ticket_name' => $ticket->name,
-                'status' => $statusName,
-                'priority' => $priorityName,
-                'type' => $typeName,
-                'status_class' => $statusClass,
-                'priority_class' => $priorityClass,
-                'start_date' => $ticket->start_date->format('Y-m-d'),
-                'end_date' => $ticket->due_date->format('Y-m-d'),
-                'progress' => $progress
-            ]);
         }
 
-        Log::info('[Roadmap] Successfully processed tickets', [
-            'project_id' => $project->id,
-            'total_tasks' => count($tasks),
-            'date_range' => [
-                'first' => $tasks[0]['start'] ?? null,
-                'last' => end($tasks)['end'] ?? null
-            ]
-        ]);
-
-        return response()->json($tasks);
-    }
-
-    /**
-     * Get Status CSS class for main bar color
-     */
-    private function getStatusClass(string $statusName, $status = null): string
-    {
-        $nameLower = strtolower($statusName);
-
-        // Check for "Done" or "Archived"
-        if ($status && $status->is_final) {
-            return 'status-done';
-        }
-
-        // Check for "In Progress"
-        if (str_contains($nameLower, 'progress') || str_contains($nameLower, 'doing')) {
-            return 'status-in-progress';
-        }
-
-        // Check for "Archived"
-        if (str_contains($nameLower, 'archived') || str_contains($nameLower, 'archive')) {
-            return 'status-archived';
-        }
-
-        // Default: Todo
-        return 'status-todo';
-    }
-
-    /**
-     * Get Priority CSS class for left border styling
-     */
-    private function getPriorityClass(string $priorityName): string
-    {
-        $nameLower = strtolower($priorityName);
-
-        if (in_array($nameLower, ['high', 'critical', 'urgent', 'highest'])) {
-            return 'priority-high';
-        }
-
-        if (in_array($nameLower, ['low', 'lowest', 'minor'])) {
-            return 'priority-low';
-        }
-
-        // Normal priority has no special border
-        return 'priority-normal';
-    }
-
-    /**
-     * Get Type Icon for popup display
-     */
-    private function getTypeIcon(string $typeName): string
-    {
-        $nameLower = strtolower($typeName);
-
-        $icons = [
-            'bug' => '<svg class="w-4 h-4 text-red-600" fill="currentColor" viewBox="0 0 20 20"><path d="M10 2a8 8 0 100 16 8 8 0 000-16zm1 11H9v-2h2v2zm0-4H9V5h2v4z"/></svg>',
-            'evolution' => '<svg class="w-4 h-4 text-purple-600" fill="currentColor" viewBox="0 0 20 20"><path d="M10.894 2.553a1 1 0 00-1.788 0l-7 14a1 1 0 001.169 1.409l5-1.429A1 1 0 009 15.571V11a1 1 0 112 0v4.571a1 1 0 00.725.962l5 1.428a1 1 0 001.17-1.408l-7-14z"/></svg>',
-            'task' => '<svg class="w-4 h-4 text-green-600" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/></svg>'
-        ];
-
-        return $icons[$nameLower] ?? $icons['task'];
-    }
-
-    /**
-     * Calculate progress based on status
-     */
-    private function calculateProgress(Ticket $ticket): int
-    {
-        if ($ticket->status) {
-            // If status is final (Done/Archived), return 100%
-            if ($ticket->status->is_final) {
-                return 100;
-            }
-
-            $statusName = strtolower($ticket->status->name);
-
-            // If status is "In Progress", return 50% (or use ticket's progress field)
-            if (str_contains($statusName, 'progress')) {
-                return $ticket->progress ?? 50;
-            }
-        }
-
-        // Default: 0% for Todo
-        return 0;
-    }
-
-    /**
-     * Build Enhanced Popup HTML with all details
-     */
-    private function buildPopupHtml(
-        Ticket $ticket,
-        string $statusName,
-        string $priorityName,
-        string $typeName,
-        string $typeIcon
-    ): string {
-        $assignee = $ticket->responsible 
-            ? htmlspecialchars($ticket->responsible->name)
-            : 'Unassigned';
-
-        return 
-            '<div class="p-4 min-w-[280px]">' .
-                '<div class="flex items-start gap-3 mb-3">' .
-                    '<div class="flex-shrink-0 mt-0.5">' . $typeIcon . '</div>' .
-                    '<div class="flex-1">' .
-                        '<h4 class="font-bold text-gray-900 text-sm mb-1">' . 
-                            htmlspecialchars($ticket->name) . 
-                        '</h4>' .
-                        '<div class="flex items-center gap-2 text-xs text-gray-500">' .
-                            '<span class="font-medium text-gray-700">' . htmlspecialchars($typeName) . '</span>' .
-                        '</div>' .
-                    '</div>' .
-                '</div>' .
-                
-                '<div class="space-y-2 text-xs">' .
-                    '<div class="flex items-center justify-between">' .
-                        '<span class="text-gray-500">Status:</span>' .
-                        '<span class="font-medium text-gray-900">' . htmlspecialchars($statusName) . '</span>' .
-                    '</div>' .
-                    '<div class="flex items-center justify-between">' .
-                        '<span class="text-gray-500">Priority:</span>' .
-                        '<span class="font-medium text-gray-900">' . htmlspecialchars($priorityName) . '</span>' .
-                    '</div>' .
-                    '<div class="flex items-center justify-between">' .
-                        '<span class="text-gray-500">Assignee:</span>' .
-                        '<span class="font-medium text-gray-900">' . $assignee . '</span>' .
-                    '</div>' .
-                    '<div class="pt-2 mt-2 border-t border-gray-100">' .
-                        '<div class="flex items-center gap-2 text-gray-500">' .
-                            '<svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">' .
-                                '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>' .
-                            '</svg>' .
-                            '<span>' . 
-                                $ticket->start_date->format('M d') . 
-                                ' → ' . 
-                                $ticket->due_date->format('M d, Y') . 
-                            '</span>' .
-                        '</div>' .
-                    '</div>' .
-                '</div>' .
-            '</div>';
-    }
-
-    /**
-     * Get roadmap dates for Gantt chart
-     */
-    public function getRoadmapDates(Project $project)
-    {
-        // Check access
-        if ($project->owner_id != auth()->id() && 
-            !$project->users->where('id', auth()->id())->count()) {
-            return response()->json(['message' => 'Unauthorized'], 403);
-        }
-
-        $firstDate = $project->epicsFirstDate;
-        $lastDate = $project->epicsLastDate;
+        $usedStatuses = $tickets->pluck('status')
+        ->filter() // Loại bỏ các ticket không có status
+        ->unique('id')
+        ->map(function ($status) {
+            return [
+                'name' => $status->name,
+                'color' => $status->color,
+            ];
+        })->values();
 
         return response()->json([
-            'first_date' => $firstDate ? Carbon::parse($firstDate)->subMonths(2)->format('Y-m-d') : null,
-            'last_date' => $lastDate ? Carbon::parse($lastDate)->addMonths(2)->format('Y-m-d') : null,
-            'scroll_to' => $firstDate ? Carbon::parse($firstDate)->subDays(7)->format('Y-m-d') : null,
+            'tasks' => $tasks,
+            'legend' => [
+                'statuses' => $usedStatuses, // Sử dụng danh sách đã trích xuất
+                'priorities' => \App\Models\TicketPriority::get(['name', 'color'])
+            ]
         ]);
+    }
+
+    private function buildModernPopup($ticket, $assignee): string
+    {
+        return "
+        <div class='p-4 min-w-[260px] bg-white rounded-xl shadow-2xl'>
+            <div class='flex items-center gap-3 mb-3 border-b pb-3 border-slate-100'>
+                <div class='w-10 h-10 rounded-full bg-indigo-500 flex items-center justify-center text-white font-bold text-sm shadow-indigo-200 shadow-lg'>
+                    " . strtoupper(substr($assignee, 0, 1)) . "
+                </div>
+                <div>
+                    <div class='text-[10px] text-slate-400 font-bold uppercase tracking-widest'>Assignee</div>
+                    <div class='text-sm font-extrabold text-slate-800'>$assignee</div>
+                </div>
+            </div>
+            <div class='space-y-3'>
+                <div class='flex justify-between items-center'>
+                    <span class='text-xs text-slate-500'>Task Status</span>
+                    <span class='px-2 py-1 rounded-md bg-slate-100 text-[10px] font-black text-slate-700 uppercase'>" . ($ticket->status->name ?? 'N/A') . "</span>
+                </div>
+                <div class='flex items-center gap-2 text-xs text-slate-400'>
+                    <svg class='w-4 h-4' fill='none' stroke='currentColor' viewBox='0 0 24 24'><path stroke-width='2' d='M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z'/></svg>
+                    <span>" . $ticket->start_date->format('d M') . " - " . $ticket->due_date->format('d M, Y') . "</span>
+                </div>
+            </div>
+        </div>";
     }
 }
