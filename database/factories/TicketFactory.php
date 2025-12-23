@@ -28,17 +28,22 @@ class TicketFactory extends Factory
      * @return array<string, mixed>
      */
     public function definition()
-    {
-        return [
-            'name' => ucfirst($this->faker->words(4, true)),
-            'content' => $this->faker->paragraphs(3, true),
-            'estimation' => $this->faker->randomElement([1, 2, 3, 5, 8, 13]),
-            'project_id' => Project::factory(),
-            'owner_id' => User::factory(),
-            'responsible_id' => null,
-            'status_id' => TicketStatus::inRandomOrder()->first()->id ?? TicketStatus::factory(),
-            'priority_id' => TicketPriority::inRandomOrder()->first()->id ?? TicketPriority::factory(),
-            'type_id' => TicketType::inRandomOrder()->first()->id ?? TicketType::factory(),
-        ];
-    }
+        {
+            // Tạo ngày ngẫu nhiên trong khoảng tháng hiện tại
+            $start = $this->faker->dateTimeBetween('-1month', '+1 month');
+            $due = (clone $start)->modify('+' . rand(2, 10) . ' days');
+
+            return [
+                'name' => ucfirst($this->faker->words(4, true)),
+                'content' => $this->faker->paragraphs(1, true),
+                'project_id' => Project::factory(),
+                'owner_id' => User::factory(),
+                'responsible_id' => null, // Sẽ gán trong Seeder
+                'status_id' => TicketStatus::inRandomOrder()->first()->id ?? 1,
+                'priority_id' => TicketPriority::inRandomOrder()->first()->id ?? 2,
+                'type_id' => TicketType::inRandomOrder()->first()->id ?? 1,
+                'start_date' => $start->format('Y-m-d'), // QUAN TRỌNG
+                'due_date' => $due->format('Y-m-d'),   // QUAN TRỌNG
+            ];
+        }
 }
