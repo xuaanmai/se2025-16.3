@@ -1,16 +1,11 @@
 <?php
 
 use App\Models\User;
-use App\Models\Ticket;
 use Illuminate\Support\Facades\Route;
-use App\Http\Controllers\RoadMap\DataController;
 use App\Http\Controllers\Auth\OidcAuthController;
-use App\Http\Controllers\Auth\AuthController;
 
-// Share ticket
-// Route::get('/tickets/share/{ticket:code}', function (Ticket $ticket) {
-//     return redirect()->to(route('filament.resources.tickets.view', $ticket));
-// })->name('filament.resources.tickets.share');
+// Redirect root to SPA entry
+Route::redirect('/', '/app')->name('home');
 
 // Validate an account
 Route::get('/validate-account/{user:creation_token}', function (User $user) {
@@ -22,11 +17,6 @@ Route::get('/validate-account/{user:creation_token}', function (User $user) {
 // Login default redirection
 Route::redirect('/login-redirect', '/login')->name('login');
 
-// Road map JSON data
-Route::get('road-map/data/{project}', [DataController::class, 'data'])
-    ->middleware(['verified', 'auth'])
-    ->name('road-map.data');
-
 Route::name('oidc.')
     ->prefix('oidc')
     ->group(function () {
@@ -34,13 +24,7 @@ Route::name('oidc.')
         Route::get('callback', [OidcAuthController::class, 'callback'])->name('callback');
     });
 
-// API routes cho Vue app (cần session)
-Route::prefix('api')->middleware('web')->group(function () {
-    Route::get('/user', [AuthController::class, 'user'])->middleware('auth');
-    Route::post('/logout', [AuthController::class, 'logout'])->middleware('auth');
-});
-
 // Vue App Route - Phải đặt cuối cùng để không conflict với các routes khác
-Route::get('/app/{any?}', function () {
-    return view('app');
-})->where('any', '.*')->name('app');
+Route::view('/app/{any?}', 'app')
+    ->where('any', '.*')
+    ->name('app');
