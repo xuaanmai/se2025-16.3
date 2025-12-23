@@ -413,4 +413,3 @@ class ProjectController extends Controller
         return $query->paginate(12);
     }
 }
-
