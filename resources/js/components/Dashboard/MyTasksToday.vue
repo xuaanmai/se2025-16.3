@@ -2,7 +2,7 @@
   <div class="bg-white p-6 rounded-lg shadow-md">
     <div class="flex justify-between items-center mb-4">
       <h3 class="font-semibold text-lg text-gray-800">
-        My Tasks Today
+        Upcoming Tasks (Next 3 Days)
       </h3>
       <router-link
         to="/tasks"
@@ -12,23 +12,35 @@
       </router-link>
     </div>
 
-    <ul v-if="tasks.length" class="space-y-4">
+    <ul v-if="filteredTasks.length" class="space-y-4">
       <li
-        v-for="task in tasks"
+        v-for="task in filteredTasks"
         :key="task.id"
         class="flex items-start justify-between"
       >
-        <div>
+        <div class="space-y-1">
+          <!-- Task title -->
           <p class="text-sm font-medium text-gray-900">
             {{ task.title }}
           </p>
+
+          <!-- Project name -->
           <p class="text-xs text-gray-500">
-            {{ task.project?.name }} • Due {{ formatDate(task.due_date) }}
+            Project:
+            <span class="font-medium text-gray-700">
+              {{ task.project?.name || 'No project' }}
+            </span>
+          </p>
+
+          <!-- Due date -->
+          <p class="text-xs text-gray-400">
+            Due {{ formatDate(task.due_date) }}
           </p>
         </div>
 
+        <!-- Status -->
         <span
-          class="text-xs px-2 py-1 rounded-full"
+          class="text-xs px-2 py-1 rounded-full whitespace-nowrap"
           :class="statusClass(task)"
         >
           {{ task.status }}
@@ -37,29 +49,52 @@
     </ul>
 
     <div v-else class="text-center py-6 text-gray-500">
-      🎉 You have no tasks for today.
+      🎉 No tasks due in the next 3 days.
     </div>
   </div>
 </template>
 
 <script setup>
+import { computed } from 'vue'
+
 const props = defineProps({
   tasks: {
     type: Array,
     default: () => [],
   },
-});
+})
 
-const formatDate = (date) =>
-  new Date(date).toLocaleDateString();
+// --- Format ngày ---
+const formatDate = (date) => {
+  if (!date) return 'N/A'
+  const d = new Date(date)
+  return d.toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric' })
+}
 
+// --- Class status ---
 const statusClass = (task) => {
-  if (task.is_overdue) {
-    return 'bg-red-100 text-red-700';
-  }
-  if (task.is_due_today) {
-    return 'bg-yellow-100 text-yellow-700';
-  }
-  return 'bg-gray-100 text-gray-600';
-};
+  if (task.is_overdue) return 'bg-red-100 text-red-700'
+  if (task.is_due_today) return 'bg-yellow-100 text-yellow-700'
+  return 'bg-gray-100 text-gray-600'
+}
+
+// --- Lọc tasks 3 ngày tới ---
+const filteredTasks = computed(() => {
+  const today = new Date()
+  today.setHours(0, 0, 0, 0) // 0h hôm nay
+
+  const threeDaysLater = new Date(today)
+  threeDaysLater.setDate(today.getDate() + 3)
+  threeDaysLater.setHours(23, 59, 59, 999) // cuối ngày thứ 3
+
+  return props.tasks.filter((task) => {
+    if (!task.due_date) return false
+
+    const due = new Date(task.due_date)
+    // ép về 0h local để tránh lệch do timezone
+    due.setHours(0, 0, 0, 0)
+
+    return due >= today && due <= threeDaysLater
+  })
+})
 </script>
